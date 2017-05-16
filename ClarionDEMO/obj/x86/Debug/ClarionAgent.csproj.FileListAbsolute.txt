@@ -1,0 +1,12 @@
+C:\Users\Note Fabio M\Desktop\Arquivos\UNICAMP - IA941\CLARION\Projects\ClarionDEMO\ClarionDEMO\obj\x86\Debug\ClarionAgent.csprojResolveAssemblyReference.cache
+C:\Users\Note Fabio M\Desktop\Arquivos\UNICAMP - IA941\CLARION\Projects\ClarionDEMO\ClarionDEMO\bin\Debug\ClarionDEMO.exe
+C:\Users\Note Fabio M\Desktop\Arquivos\UNICAMP - IA941\CLARION\Projects\ClarionDEMO\ClarionDEMO\bin\Debug\ClarionDEMO.pdb
+C:\Users\Note Fabio M\Desktop\Arquivos\UNICAMP - IA941\CLARION\Projects\ClarionDEMO\ClarionDEMO\bin\Debug\ClarionLibrary.dll
+C:\Users\Note Fabio M\Desktop\Arquivos\UNICAMP - IA941\CLARION\Projects\ClarionDEMO\ClarionDEMO\bin\Debug\glib-sharp.dll
+C:\Users\Note Fabio M\Desktop\Arquivos\UNICAMP - IA941\CLARION\Projects\ClarionDEMO\ClarionDEMO\bin\Debug\gtk-sharp.dll
+C:\Users\Note Fabio M\Desktop\Arquivos\UNICAMP - IA941\CLARION\Projects\ClarionDEMO\ClarionDEMO\bin\Debug\Mono.Posix.dll
+C:\Users\Note Fabio M\Desktop\Arquivos\UNICAMP - IA941\CLARION\Projects\ClarionDEMO\ClarionDEMO\bin\Debug\glib-sharp.pdb
+C:\Users\Note Fabio M\Desktop\Arquivos\UNICAMP - IA941\CLARION\Projects\ClarionDEMO\ClarionDEMO\obj\x86\Debug\ClarionDEMO.exe
+C:\Users\Note Fabio M\Desktop\Arquivos\UNICAMP - IA941\CLARION\Projects\ClarionDEMO\ClarionDEMO\obj\x86\Debug\ClarionDEMO.pdb
+C:\Users\Note Fabio M\CLARION-WS3D\ClarionDEMO\obj\x86\Debug\ClarionDEMO.exe
+C:\Users\Note Fabio M\CLARION-WS3D\ClarionDEMO\obj\x86\Debug\ClarionDEMO.pdb

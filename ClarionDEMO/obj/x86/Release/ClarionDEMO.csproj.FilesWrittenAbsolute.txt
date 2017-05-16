@@ -1,0 +1,3 @@
+/home/rgudwin/Local/Cursos/IA941/Clarion/ClarionDEMO/ClarionDEMO/obj/x86/Release/.NETFramework,Version=v4.5.AssemblyAttribute.cs
+/home/rgudwin/Local/Cursos/IA941/Clarion/ClarionDEMO/ClarionDEMO/obj/x86/Release/ClarionDEMO.gtk-gui.gui.stetic
+/home/rgudwin/Local/Cursos/IA941/Clarion/ClarionDEMO/ClarionDEMO/bin/Release/ClarionLibrary.dll
