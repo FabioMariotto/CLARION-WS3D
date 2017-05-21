@@ -22,7 +22,7 @@ namespace ClarionDEMO
 		{
 			this.Build();
 			update();
-			startViewTimer();
+			//startViewTimer();
 		}
 
 		public void setBag(int r, int g, int b, int y, int m, int w, int a, int n) {

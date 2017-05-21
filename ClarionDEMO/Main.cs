@@ -49,10 +49,10 @@ namespace ClarionDEMO
                         worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
                         worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
                     }
-                    worldServer.NewFood(0, rand.Next(20, 790), rand.Next(20, 580));
-                    worldServer.NewFood(0, rand.Next(20, 790), rand.Next(20, 580));
                     worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
-                    worldServer.NewFood(0, rand.Next(20, 790), rand.Next(20, 580));
+                    worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
+                    worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
+                    worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
                     worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
 
                     if (!String.IsNullOrWhiteSpace(creatureId))

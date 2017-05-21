@@ -33,13 +33,20 @@ namespace ClarionDEMO
 
         #region creature state Memory
 
+        String creatureId = String.Empty;
+        String creatureName = String.Empty;
+        Creature mycreature;
         private double currentFUEL, thelastFUEL; 
         private int currentLeaf, thelastLeaf;
         bool currentFoodInFront, currentGemInFront;
         bool currentFoodInSide, currentGemInSide;
         bool thelastFoodInFront, thelastGemInFront;
         bool thelastFoodInSide,  thelastGemInSide;
-        
+        Thing thingToEat;
+        Thing thingToGet;
+        string currentAction="";
+        double currentFeedBack;
+        public int[] leaflet1 = new int[6] { 0, 0, 0, 0, 0, 0};
 
         #endregion
 
@@ -62,19 +69,13 @@ namespace ClarionDEMO
         //Setting up goals LABELS
         static private String SearchFood = "Search Food";
         static private String SearchGem = "Search Gem";
-
         double prad = 0;
-        Thing thingToEat;
-        Thing thingToGet;
 
         #endregion
 
-        #region Properties
+        #region Execution Parameters
 
-		public Mind mind;
-		String creatureId = String.Empty;
-		String creatureName = String.Empty;
-
+        public double creatureLife=1;
         /// If this value is greater than zero, the agent will have a finite number of cognitive cycle. Otherwise, it will have infinite cycles.
         public double MaxNumberOfCognitiveCycles = -1;
         /// Current cognitive cycle number
@@ -90,7 +91,6 @@ namespace ClarionDEMO
         // Declaring the agent
         public Clarion.Framework.Agent CurrentAgent;
 
-
         //declaring inputs
 		private DimensionValuePair inputWallAhead    ;
         private DimensionValuePair inputGemAhead     ;
@@ -101,7 +101,6 @@ namespace ClarionDEMO
         private DimensionValuePair inputFoodUpRight  ;
         private DimensionValuePair inputFoodUpLeft   ;
         private DimensionValuePair inputFoodUpFront  ;
-      
         
         //declaring Actions
 		private ExternalActionChunk eacDO_NOTHING         ;
@@ -117,18 +116,26 @@ namespace ClarionDEMO
 
         #endregion
 
-
-
-        #region Constructor
-
+        /// <summary>
+        /// Clarion Agent Constructor
+        /// </summary>
+        /// <param name="nws"></param>
+        /// <param name="creature_ID"></param>
+        /// <param name="creature_Name"></param>
         public ClarionAgent(WorldServer nws, String creature_ID, String creature_Name)
         {
-			worldServer = nws;
-			// Initialize the agent
+            //Resetting leaflet
+            leaflet1 = new int[6]{ 0, 0, 0, 0, 0, 0};
+
+            //generating 3 random gem/jewels at leaflet
+            Random rand = new Random(DateTime.Now.Millisecond);
+            leaflet1[rand.Next(0, 5)]++;
+            leaflet1[rand.Next(0, 5)]++;
+            leaflet1[rand.Next(0, 5)]++;
+
+            //recording world and creature references
+            worldServer = nws;
             CurrentAgent = World.NewAgent("CurrentAgent");
-            //Initializes the GUI
-			mind = new Mind();
-			mind.Show();
 			creatureId = creature_ID;
 			creatureName = creature_Name;
 
@@ -143,7 +150,6 @@ namespace ClarionDEMO
             inputFoodUpLeft  = World.NewDimensionValuePair(DIMENSION_SENSOR_VISUAL, VALUE_FOOD_upLeft   );
             inputFoodUpFront = World.NewDimensionValuePair(DIMENSION_SENSOR_VISUAL, VALUE_FOOD_upFront  );
 
-
             // Initialize Output actions
             eacDO_NOTHING   = World.NewExternalActionChunk(CreatureActions.GO_BACK   .ToString());
             eacROTATE_RIGHT = World.NewExternalActionChunk(CreatureActions.ROTATE_RIGHT .ToString());
@@ -156,13 +162,10 @@ namespace ClarionDEMO
             gSearchFood = World.NewGoalChunk(SearchFood);
             gSearchGems = World.NewGoalChunk(SearchGem);
             
-
-
             //Create thread to run simulation
             runThread = new Thread(CognitiveCycle);
 			Console.WriteLine("Agent started");
         }
-        #endregion
 
         #region Public Methods
         /// <summary>
@@ -178,6 +181,63 @@ namespace ClarionDEMO
 				// Start Simulation Thread                
                 runThread.Start(null);
             }
+        }
+
+        /// <summary>
+        /// Updates the console display information
+        /// </summary>
+        public void updateConsole()
+        {
+            Console.Clear();
+            Console.CursorTop = 0;
+            Console.CursorLeft = 0;
+            Console.WriteLine("---Remaining Leaflet---");
+            Console.WriteLine("|   RED="+leaflet1[0]+ "    GREEN=" + leaflet1[1] + "  |");
+            Console.WriteLine("|   BLUE=" + leaflet1[2] + "   YELLOW=" + leaflet1[3] + " |");
+            Console.WriteLine("|   PURP=" + leaflet1[4] + "   WHITE=" + leaflet1[5] + "  |");
+            Console.WriteLine("-----------------------");
+            Console.WriteLine("FUEL: "+currentFUEL);
+            Console.WriteLine("Creature Life: " + creatureLife);
+            Console.WriteLine("Cycle: "+ CurrentCognitiveCycle);
+            Console.WriteLine("Choosen action: " + currentAction);
+            Console.WriteLine("FeedBack given: " + currentFeedBack);
+            Console.WriteLine("Learned rules:");
+            foreach (var i in CurrentAgent.GetInternals(Agent.InternalContainers.ACTION_RULES))
+            {
+                Console.WriteLine("\r\n" + i.ToString());
+            }
+
+        }
+
+        /// <summary>
+        /// Update leaflet with info from server and return total remaining
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
+        public int updateLeaflet(Creature c)
+        {
+            //leaflet1[0] = 0;
+            //leaflet1[1] = 0;
+            //leaflet1[2] = 0;
+            //leaflet1[3] = 0;
+            //leaflet1[4] = 0;
+            //leaflet1[5] = 0;
+            //foreach (var item in c.getLeaflets())
+            //{
+            //    leaflet1[0] = leaflet1[0] + c.getLeaflets().First().getRequired("Red");
+            //    leaflet1[1] = leaflet1[1] + c.getLeaflets().First().getRequired("Green");
+            //    leaflet1[2] = leaflet1[2] + c.getLeaflets().First().getRequired("Blue");
+            //    leaflet1[3] = leaflet1[3] + c.getLeaflets().First().getRequired("Yellow");
+            //    leaflet1[4] = leaflet1[4] + c.getLeaflets().First().getRequired("Magenta");
+            //    leaflet1[5] = leaflet1[5] + c.getLeaflets().First().getRequired("White");
+            //}
+            
+            int result = 0;
+            foreach (var item in leaflet1)
+            {
+                result = result + item;
+            }
+            return result;
         }
 
         /// <summary>
@@ -197,6 +257,10 @@ namespace ClarionDEMO
             }
         }
 
+        /// <summary>
+        /// Returns a list of THINGs seen by the creature
+        /// </summary>
+        /// <returns></returns>
 		IList<Thing> processSensoryInformation()
 		{
 			IList<Thing> response = null;
@@ -208,17 +272,23 @@ namespace ClarionDEMO
 				while (prad > Math.PI) prad -= 2 * Math.PI;
 				while (prad < - Math.PI) prad += 2 * Math.PI;
 				Sack s = worldServer.SendGetSack(creatureId);
-				mind.setBag(s);
 			}
 
 			return response;
 		}
 
+
+        /// <summary>
+        /// Executes the action selected by the clarion agent
+        /// </summary>
+        /// <param name="externalAction"></param>
 		void processSelectedAction(CreatureActions externalAction)
 		{   Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
 			if (worldServer != null && worldServer.IsConnected)
 			{
-                //Console.WriteLine(externalAction.ToString());
+                updateConsole();
+                currentAction = externalAction.ToString();
+                
                 switch (externalAction)
                 {
                     case CreatureActions.GO_BACK:
@@ -245,6 +315,22 @@ namespace ClarionDEMO
                         if (thingToGet != null && thingToGet.CategoryId == Thing.CATEGORY_JEWEL && thingToGet.DistanceToCreature <=30)
                         {
                             worldServer.SendSackIt(creatureId, thingToGet.Name);
+                            //manually update the creature leaflet
+                            //foreach (LeafletItem li in mycreature.getLeaflets().First().items)
+                            //{
+                            //    if (li.itemKey.Equals(thingToGet.Material.Color))
+                            //        if (li.totalNumber > 0)
+                            //        {
+                            //            li.totalNumber = li.totalNumber - 1;
+                            //            li.collected = li.collected + 1;
+                            //            updateLeaflet(mycreature);
+                            //            updateConsole();
+                            //            break;
+                            //        }
+                            //}
+                            
+                            if (leaflet1[parseColor(thingToGet.Material.Color)] > 0)
+                                leaflet1[parseColor(thingToGet.Material.Color)]--;
                             thingToGet = null;
                         }
                         break;
@@ -257,6 +343,7 @@ namespace ClarionDEMO
         #endregion
 
         #region Setup Agent Methods
+
         /// <summary>
         /// Setup agent infra structure (ACS, NACS, MS and MCS)
         /// </summary>
@@ -340,33 +427,32 @@ namespace ClarionDEMO
             //goal should be activated to full extension when it is selected
             CurrentAgent.MS.Parameters.CURRENT_GOAL_ACTIVATION_OPTION = MotivationalSubsystem.CurrentGoalActivationOptions.FULL;
         }
-
-
-        //Saves the current state of the creature
+        
+        /// <summary>
+        /// Saves the current state of the creature
+        /// </summary>
+        /// <param name="listOfThings"></param>
         private void stateToMemory(IList<Thing> listOfThings)
         {
             Thing cthing = listOfThings.Where(item => (item.CategoryId == Thing.CATEGORY_CREATURE)).First();
             Creature c = (Creature)cthing;
            
             currentFUEL = c.Fuel;
-            currentLeaf = 0;
-            for (int i = 0; i < mind.leaflet1.Length; i++)
-            {
-                currentLeaf = currentLeaf + mind.leaflet1[i];
-            }
-
+       
+            currentLeaf = updateLeaflet(c);
+           
             currentFoodInFront = listOfThings.Where(item => (upfront(cthing, item) && (item.CategoryId == Thing.categoryPFOOD || item.CategoryId == Thing.CATEGORY_NPFOOD))).Any();
 
             currentFoodInSide = listOfThings.Where(item => ((upRight(cthing, item)|| upLeft(cthing, item)) && (item.CategoryId == Thing.categoryPFOOD || item.CategoryId == Thing.CATEGORY_NPFOOD))).Any();
 
-            currentGemInFront = listOfThings.Where(item => (upfront(cthing, item) && item.CategoryId == Thing.CATEGORY_JEWEL && mind.leaflet1[parseColor(item.Material.Color)] > 0)).Any();
+            currentGemInFront = listOfThings.Where(item => (upfront(cthing, item) && item.CategoryId == Thing.CATEGORY_JEWEL && leaflet1[parseColor(item.Material.Color)] > 0)).Any();
 
-            currentGemInSide = listOfThings.Where(item => ((upRight(cthing, item) || upLeft(cthing, item)) && item.CategoryId == Thing.CATEGORY_JEWEL && mind.leaflet1[parseColor(item.Material.Color)] > 0)).Any();
+            currentGemInSide = listOfThings.Where(item => ((upRight(cthing, item) || upLeft(cthing, item)) && item.CategoryId == Thing.CATEGORY_JEWEL && leaflet1[parseColor(item.Material.Color)] > 0)).Any();
 
         }
 
         /// <summary>
-        /// Make the agent perception. In other words, translate the information that came from sensors to a new type that the agent can understand
+        /// Make the agent perception. Translate the information to feed each Input Node.
         /// </summary>
         /// <param name="sensorialInformation">The information that came from server</param>
         /// <returns>The perceived information</returns>
@@ -380,8 +466,7 @@ namespace ClarionDEMO
 
             Thing cthing = listOfThings.Where(item => (item.CategoryId == Thing.CATEGORY_CREATURE)).First();
             Creature c = (Creature)cthing;
-
-            
+            mycreature = c;
 
             // Detect if we have a wall ahead
             aux = listOfThings.Where(item => (item.CategoryId == Thing.CATEGORY_BRICK && item.DistanceToCreature <= 65)).Any();
@@ -418,30 +503,30 @@ namespace ClarionDEMO
             si.Add(inputFoodUpLeft, activation);
 
             // Detect if we have Gem Up front
-            aux = listOfThings.Where(item => (upfront(cthing, item) && item.CategoryId == Thing.CATEGORY_JEWEL && mind.leaflet1[parseColor(item.Material.Color)] > 0)).Any();
+            aux = listOfThings.Where(item => (upfront(cthing, item) && item.CategoryId == Thing.CATEGORY_JEWEL && leaflet1[parseColor(item.Material.Color)] > 0)).Any();
             activation = aux ? CurrentAgent.Parameters.MAX_ACTIVATION : CurrentAgent.Parameters.MIN_ACTIVATION;
             si.Add(inputGemUpFront, activation);
 
             // Detect if we have Gem Up right
-            aux = listOfThings.Where(item => (upRight(cthing, item) && item.CategoryId == Thing.CATEGORY_JEWEL && mind.leaflet1[parseColor(item.Material.Color)] > 0)).Any();
+            aux = listOfThings.Where(item => (upRight(cthing, item) && item.CategoryId == Thing.CATEGORY_JEWEL && leaflet1[parseColor(item.Material.Color)] > 0)).Any();
             activation = aux ? CurrentAgent.Parameters.MAX_ACTIVATION : CurrentAgent.Parameters.MIN_ACTIVATION;
             si.Add(inputGemUpRight, activation);
 
             // Detect if we have Gem Up left
-            aux = listOfThings.Where(item => (upLeft(cthing, item) && item.CategoryId == Thing.CATEGORY_JEWEL && mind.leaflet1[parseColor(item.Material.Color)] > 0)).Any();
+            aux = listOfThings.Where(item => (upLeft(cthing, item) && item.CategoryId == Thing.CATEGORY_JEWEL && leaflet1[parseColor(item.Material.Color)] > 0)).Any();
             activation = aux ? CurrentAgent.Parameters.MAX_ACTIVATION : CurrentAgent.Parameters.MIN_ACTIVATION;
             si.Add(inputGemUpLeft, activation);
 
             int n = 0;
-			foreach(Leaflet l in c.getLeaflets()) {
-				mind.updateLeaflet(n,l);
-				n++;
-			}
+            updateLeaflet(c);
             return si;
         }
         #endregion
 
-        #region Run Thread Method
+        /// <summary>
+        /// Runs 1 cognitive cycle. Perceive world > makes decision > send action > wait a bit > give feedback of action results.
+        /// </summary>
+        /// <param name="obj"></param>
         private void CognitiveCycle(object obj)
         {
 
@@ -449,6 +534,7 @@ namespace ClarionDEMO
             // Cognitive Cycle starts here getting sensorial information
             while (CurrentCognitiveCycle != MaxNumberOfCognitiveCycles)
             {
+
                 // Get current sensory information                    
                 IList<Thing> currentSceneInWS3D = processSensoryInformation();
 
@@ -494,7 +580,37 @@ namespace ClarionDEMO
                 //give feed back to network
                 CurrentAgent.ReceiveFeedback(si, giveFeedBack(actionType));
 
+                //Reset creature and world if it has died
+                if (mycreature.Fuel <= 0)
+                {
+                    worldServer.SendWorldReset();
+                    worldServer.NewCreature(400, 240, 0, out creatureId, out creatureName);
+                    worldServer.SendCreateLeaflet();
+                    Random rand = new Random(1);
+                    for (int i = 0; i < 10; i++)
+                    {
+                        worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
+                        worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
+                        worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
+                        worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
+                    }
+                    worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
+                    worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
+                    worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
+                    worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
+                    worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
+                    worldServer.SendStartCamera(creatureId);
+                    worldServer.SendStartCreature(creatureId);
+                    leaflet1 = new int[6] { 0, 0, 0, 0, 0, 0 };
+                    leaflet1[rand.Next(0, 5)]++;
+                    leaflet1[rand.Next(0, 5)]++;
+                    leaflet1[rand.Next(0, 5)]++;
+                    updateLeaflet(mycreature);
+                    creatureLife++;
+                    CurrentCognitiveCycle = 0;
+                }
 
+                //Every 10 cycles, write learned rules to a .txt file
                 if (CurrentCognitiveCycle % 10 == 0)
                 {
                     if (!File.Exists("LearnedRules.txt") == true)
@@ -510,89 +626,128 @@ namespace ClarionDEMO
                     }
                     configWriter.Close();
                 }
-               
-               
-
-
-
             }
         }
-        #endregion
+        
 
+        /// <summary>
+        /// Gives feed back to the agent based on previous state and new state
+        /// </summary>
+        /// <param name="actionType"></param>
+        /// <returns></returns>
         private double giveFeedBack(CreatureActions actionType)
         {
+            
             if (CurrentAgent.CurrentGoal == gSearchFood)
             {
-                if (thelastFUEL >= 300)
-                    return 0;
-                if (currentFUEL > thelastFUEL)
-                    return 1;
-                if (currentFoodInFront == true && thelastFoodInFront == false)
-                    return 0.8;
-                if (currentFoodInFront == true && actionType != CreatureActions.GO_BACK)
-                    return 0.7;
-                if (currentFoodInSide == true && thelastFoodInSide == false)
-                    return 0.4;
-                if (currentFoodInSide == true && actionType != CreatureActions.GO_BACK)
-                    return 0.3;
+                if (thelastFUEL >= 300) 
+                    currentFeedBack = 0;
+                else if (currentFUEL > thelastFUEL) 
+                    currentFeedBack = 1;
+                else if (currentFoodInFront == true && thelastFoodInFront == false)
+                    currentFeedBack = 0.8;
+                else if (currentFoodInFront == true && actionType != CreatureActions.GO_BACK)
+                    currentFeedBack = 0.7;
+                else if (currentFoodInSide == true && thelastFoodInSide == false)
+                    currentFeedBack = 0.4;
+                else if (currentFoodInSide == true && actionType != CreatureActions.GO_BACK)
+                    currentFeedBack = 0.3;
                 else
-                    return 0.1;
-
-
+                    currentFeedBack = 0.1;
+                return currentFeedBack;
             }
             else if (CurrentAgent.CurrentGoal == gSearchGems)
             {
                 if (thelastFUEL < 300)
-                    return 0;
+                    currentFeedBack = 0;
                 if (currentLeaf < thelastLeaf)
-                    return 1;
+                    currentFeedBack = 1;
                 if (currentGemInFront == true && thelastGemInFront == false)
-                    return 0.8;
+                    currentFeedBack = 0.8;
                 if (currentGemInFront == true && actionType != CreatureActions.GO_BACK)
-                    return 0.7;
+                    currentFeedBack = 0.7;
                 if (currentGemInSide == true && thelastGemInSide == false)
-                    return 0.4;
+                    currentFeedBack = 0.4;
                 if (currentGemInSide == true && actionType != CreatureActions.GO_BACK)
-                    return 0.3;
+                    currentFeedBack = 0.3;
                 else
-                    return 0.1;
+                    currentFeedBack = 0.1;
+                return currentFeedBack;
 
             }
-            return 0;
+            currentFeedBack = 0;
+            return currentFeedBack;
         }
 
+        /// <summary>
+        /// Returns true if a THING is in front of the creatue view (3 degrees margin)
+        /// </summary>
+        /// <param name="creature"></param>
+        /// <param name="thing"></param>
+        /// <returns></returns>
         private bool upfront(Thing creature, Thing thing)
         {
             double Cang = creature.Pitch % 360;
             double xDiff = thing.comX - creature.X1;
             double yDiff = thing.comY - creature.Y1;
             double Tang = Math.Atan2(yDiff, xDiff) * 180.0 / Math.PI;
-            if (Cang == Tang)
+            if (Math.Abs(Cang - Tang) <= 5 || Math.Abs(Cang - Tang) >= 355)
                 return true;
             return false;
         }
+
+        /// <summary>
+        /// Returns true if a THING is in the right side of creature view
+        /// </summary>
+        /// <param name="creature"></param>
+        /// <param name="thing"></param>
+        /// <returns></returns>
         private bool upRight(Thing creature, Thing thing)
         {
+
             double Cang = creature.Pitch % 360;
             double xDiff = thing.comX - creature.X1;
             double yDiff = thing.comY - creature.Y1;
             double Tang = Math.Atan2(yDiff, xDiff) * 180.0 / Math.PI;
             //Console.WriteLine("CreatureXY=" + creature.X1 + "," + creature.Y1 + " ThingXY=" + thing.comX + "," + thing.comY);
             //Console.WriteLine("CreaturePitch=" + Cang + " Thingpitch(id:" + thing.CategoryId + ")=" + Tang);
-            if (Cang < Tang)
+            double minang = (Cang + 5);
+            double maxang = (Cang + 90);
+            if (minang<0) minang= 360+minang;
+            if ((Tang > minang && Tang < maxang) || (Tang + 360 > minang && Tang + 360 < maxang))
+            {
                 return true;
+            }
             return false;
         }
+        
+        /// <summary>
+        /// Returns true if a THING is in the left side of creature view
+        /// </summary>
+        /// <param name="creature"></param>
+        /// <param name="thing"></param>
+        /// <returns></returns>
         private bool upLeft(Thing creature, Thing thing)
         {
             double Cang = creature.Pitch % 360;
             double xDiff = thing.comX - creature.X1;
             double yDiff = thing.comY - creature.Y1;
             double Tang = Math.Atan2(yDiff, xDiff) * 180.0 / Math.PI;
-            if (Cang > Tang)
+            double minang = (Cang - 90);
+            double maxang = (Cang - 5);
+            //Console.WriteLine("CreaturePitch=" + Cang + " Thingpitch(id:" + thing.CategoryId + ")=" + Tang);
+            if ((Tang > minang && Tang < maxang) || (Tang - 360 > minang && Tang - 360 < maxang))
+            {
                 return true;
+            }
             return false;
         }
+
+        /// <summary>
+        /// Returns the index INT for each color STRING
+        /// </summary>
+        /// <param name="color"></param>
+        /// <returns></returns>
         public int parseColor(string color)
         {
             switch (color)
@@ -615,12 +770,25 @@ namespace ClarionDEMO
             }
         }
 
+        /// <summary>
+        /// Calculates the food Drive
+        /// </summary>
+        /// <param name="si"></param>
+        /// <param name="target"></param>
+        /// <returns></returns>
         private double FoodDrive_DeficitChange(ActivationCollection si, Drive target)
         {
             if (currentFUEL < 300)
             return 0.7;
             return 0.3;
         }
+
+        /// <summary>
+        /// Calculates the jewel drive
+        /// </summary>
+        /// <param name="si"></param>
+        /// <param name="target"></param>
+        /// <returns></returns>
         private static double GemDrive_DeficitChange(ActivationCollection si, Drive target)
         {
             return 0.5;
