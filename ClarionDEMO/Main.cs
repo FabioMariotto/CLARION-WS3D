@@ -35,25 +35,44 @@ namespace ClarionDEMO
                 {
                     Console.Out.WriteLine ("[SUCCESS] " + message + "\n");
 					worldServer.SendWorldReset();
-                    worldServer.NewCreature(400, 240, 0, out creatureId, out creatureName);
+                    worldServer.NewCreature(400, 300, 0, out creatureId, out creatureName);
                     worldServer.SendCreateLeaflet();
                     //worldServer.NewBrick(4, 790, 0, 800, 590);
                     //worldServer.NewBrick(4, 0, 0, 790, 10);
                     //worldServer.NewBrick(4, 10, 590, 800, 600);
                     //worldServer.NewBrick(4, 0, 0, 10, 600);
                     Random rand = new Random(1);
-                    for (int i = 0; i < 10; i++)
+                    int j = 0;
+                    int f = 1;
+                    double ang = 0;
+                    for (int i = 1; i < 25; i++)
                     {
-                        worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
-                        worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
-                        worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
-                        worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
+                        ang=(i-1)*0.261;
+                        if (f % 4 == 0)
+                        {
+                            worldServer.NewFood(0, (int)(Math.Cos(ang) * 250) +400, (int)(Math.Sin(ang) * 250) +300);
+                        }
+                        else
+                        {
+                            worldServer.NewJewel(j, (int)(Math.Cos(ang)* 250) +400, (int)(Math.Sin(ang) * 250) +300);
+                            if (j > 4) j = 0;
+                            else j++;
+                        }
+                        f++;
                     }
-                    worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
-                    worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
-                    worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
-                    worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
-                    worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
+                    
+                    //for (int i = 0; i < 10; i++)
+                    //{
+                    //    worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
+                    //    worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
+                    //    worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
+                    //    worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
+                    //}
+                    //worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
+                    //worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
+                    //worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
+                    //worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
+                    //worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
 
                     if (!String.IsNullOrWhiteSpace(creatureId))
                     {
