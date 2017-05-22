@@ -43,6 +43,9 @@ namespace ClarionDEMO
         bool currentFoodInSide, currentGemInSide;
         bool thelastFoodInFront, thelastGemInFront;
         bool thelastFoodInSide,  thelastGemInSide;
+        double currentGemDistance, thelastGemDistance;
+        double currentFoodDistance, thelastFoodDistance;
+        string myThings;
         Thing thingToEat;
         Thing thingToGet;
         string currentAction="";
@@ -58,7 +61,7 @@ namespace ClarionDEMO
         //Setting up Goals dimension LABELS
         static private String DIMENSION_GOALS = "Goals";
         //Setting up visual dimension LABELS
-        static private String VALUE_WALL_Ahead    = "Wall Ahead";   
+        static private String VALUE_Obj_Ahead    = "Obj Ahead";   
         static private String VALUE_GEM_Ahed      = "Gem Ahead";
         static private String VALUE_FOOD_Ahead    = "Food Ahead";
         static private String VALUE_LLGEM_upRight = "Gem Up Right";
@@ -77,15 +80,21 @@ namespace ClarionDEMO
         #region Execution Parameters
 
         public double creatureLife=1;
-        /// If this value is greater than zero, the agent will have a finite number of cognitive cycle. Otherwise, it will have infinite cycles.
+        // If this value is greater than zero, the agent will have a finite number of cognitive cycle. Otherwise, it will have infinite cycles.
         public double MaxNumberOfCognitiveCycles = -1;
-        /// Current cognitive cycle number
+        // Current cognitive cycle number
+        private double runCycles = 0;
         private double CurrentCognitiveCycle = 0;
         private double TotalCognitiveCycle = 0;
         private int completedLeaflets = 0;
-        /// Time between cognitive cycle in miliseconds
+        public int collectedJewels = 0;
+        // Time between cognitive cycle in miliseconds
         public Int32 TimeBetweenCognitiveCycles = 600;
-        /// A thread Class that will handle the simulation process
+        //Fuel to start looking for food
+        public int minFood = 400;
+        //Distance to consider touched
+        public int TouchDistance = 35;
+        // A thread Class that will handle the simulation process
         private Thread runThread;
 
         // Declaring the world
@@ -95,7 +104,7 @@ namespace ClarionDEMO
         public Clarion.Framework.Agent CurrentAgent;
 
         //declaring inputs
-		private DimensionValuePair inputWallAhead    ;
+		//private DimensionValuePair inputObjAhead    ;
         private DimensionValuePair inputGemAhead     ;
         private DimensionValuePair inputFoodAhead    ;
         private DimensionValuePair inputGemUpRight   ;
@@ -118,6 +127,90 @@ namespace ClarionDEMO
         private GoalChunk gSearchGems;
 
         #endregion
+
+        /// <summary>
+        /// Setup agent infra structure (ACS, NACS, MS and MCS)
+        /// </summary>
+        private void SetupAgentInfraStructure()
+        {
+            SimplifiedQBPNetwork net = AgentInitializer.InitializeImplicitDecisionNetwork(CurrentAgent, SimplifiedQBPNetwork.Factory);
+
+            //defining GOALS nodes
+            net.Input.Add(gSearchFood, DIMENSION_GOALS);
+            net.Input.Add(gSearchGems, DIMENSION_GOALS);
+
+            //Defining visual input nodes
+            //net.Input.Add(inputObjAhead  );
+            net.Input.Add(inputGemAhead);
+            net.Input.Add(inputFoodAhead);
+            net.Input.Add(inputGemUpRight);
+            net.Input.Add(inputGemUpLeft);
+            net.Input.Add(inputGemUpFront);
+            net.Input.Add(inputFoodUpRight);
+            net.Input.Add(inputFoodUpLeft);
+            net.Input.Add(inputFoodUpFront);
+
+            //defining output nodes
+            net.Output.Add(eacDO_NOTHING);
+            net.Output.Add(eacROTATE_RIGHT);
+            net.Output.Add(eacROTATE_LEFT);
+            net.Output.Add(eacGO_AHEAD);
+            net.Output.Add(eacGET_ITEM);
+            net.Output.Add(eacEAT_FOOD);
+
+
+            net.Parameters.LEARNING_RATE = 1;
+            CurrentAgent.Commit(net);
+
+            CurrentAgent.ACS.Parameters.VARIABLE_BL_BETA = .5;
+            CurrentAgent.ACS.Parameters.VARIABLE_RER_BETA = .5;
+            CurrentAgent.ACS.Parameters.VARIABLE_IRL_BETA = 0;
+            CurrentAgent.ACS.Parameters.VARIABLE_FR_BETA = 0;
+
+            RefineableActionRule.GlobalParameters.SPECIALIZATION_THRESHOLD_1 = -.6;
+            RefineableActionRule.GlobalParameters.GENERALIZATION_THRESHOLD_1 = -.1;
+            RefineableActionRule.GlobalParameters.INFORMATION_GAIN_OPTION = RefineableActionRule.IGOptions.PERFECT;
+
+            //Initialising food drive
+            FoodDrive foodDrive = AgentInitializer.InitializeDrive(CurrentAgent, FoodDrive.Factory, 1.0, (DeficitChangeProcessor)FoodDrive_DeficitChange);
+            DriveEquation foodDriveEQ = AgentInitializer.InitializeDriveComponent(foodDrive, DriveEquation.Factory);
+
+            foodDrive.Commit(foodDriveEQ);
+            CurrentAgent.Commit(foodDrive);
+
+            //Initialising gem drive
+            AutonomyDrive gemDrive = AgentInitializer.InitializeDrive(CurrentAgent, AutonomyDrive.Factory, 1.0, (DeficitChangeProcessor)GemDrive_DeficitChange);
+            DriveEquation gemDriveEQ = AgentInitializer.InitializeDriveComponent(gemDrive, DriveEquation.Factory);
+
+            gemDrive.Commit(gemDriveEQ);
+            CurrentAgent.Commit(gemDrive);
+
+            //initialising goal module and equation
+            GoalSelectionModule gsm = AgentInitializer.InitializeMetaCognitiveModule(CurrentAgent, GoalSelectionModule.Factory);
+            GoalSelectionEquation gse = AgentInitializer.InitializeMetaCognitiveDecisionNetwork(gsm, GoalSelectionEquation.Factory);
+
+            gse.Input.Add(gemDrive.GetDriveStrength());
+            gse.Input.Add(foodDrive.GetDriveStrength());
+
+            GoalStructureUpdateActionChunk fu = World.NewGoalStructureUpdateActionChunk();
+            GoalStructureUpdateActionChunk nu = World.NewGoalStructureUpdateActionChunk();
+
+            nu.Add(GoalStructure.RecognizedActions.SET_RESET, gSearchGems);
+            fu.Add(GoalStructure.RecognizedActions.SET_RESET, gSearchFood);
+
+            gse.Output.Add(nu);
+            gse.Output.Add(fu);
+
+            gsm.SetRelevance(nu, gemDrive, 1);
+            gsm.SetRelevance(fu, foodDrive, 1);
+
+            //commits drives
+            gsm.Commit(gse);
+            CurrentAgent.Commit(gsm);
+
+            //goal should be activated to full extension when it is selected
+            CurrentAgent.MS.Parameters.CURRENT_GOAL_ACTIVATION_OPTION = MotivationalSubsystem.CurrentGoalActivationOptions.FULL;
+        }
 
         /// <summary>
         /// Clarion Agent Constructor
@@ -143,7 +236,7 @@ namespace ClarionDEMO
 			creatureName = creature_Name;
 
             // Initialize Input Information
-            inputWallAhead   = World.NewDimensionValuePair(DIMENSION_SENSOR_VISUAL, VALUE_WALL_Ahead    );
+            //inputObjAhead   = World.NewDimensionValuePair(DIMENSION_SENSOR_VISUAL, VALUE_Obj_Ahead    );
             inputGemAhead    = World.NewDimensionValuePair(DIMENSION_SENSOR_VISUAL, VALUE_GEM_Ahed      );
             inputFoodAhead   = World.NewDimensionValuePair(DIMENSION_SENSOR_VISUAL, VALUE_FOOD_Ahead    );
             inputGemUpRight  = World.NewDimensionValuePair(DIMENSION_SENSOR_VISUAL, VALUE_LLGEM_upRight );
@@ -186,6 +279,24 @@ namespace ClarionDEMO
         }
 
         /// <summary>
+        /// Abort the current Simulation
+        /// </summary>
+        /// <param name="deleteAgent">If true beyond abort the current simulation it will die the agent.</param>
+        public void Abort(Boolean deleteAgent)
+        {
+            Console.WriteLine("Aborting ...");
+            if (runThread != null && runThread.IsAlive)
+            {
+                runThread.Abort();
+            }
+
+            if (CurrentAgent != null && deleteAgent)
+            {
+                CurrentAgent.Die();
+            }
+        }
+
+        /// <summary>
         /// Updates the console display information
         /// </summary>
         public void updateConsole()
@@ -199,19 +310,60 @@ namespace ClarionDEMO
             Console.WriteLine("|   BLUE=" + leaflet1[2] + "   YELLOW=" + leaflet1[3] + " |");
             Console.WriteLine("|   PURP=" + leaflet1[4] + "   WHITE=" + leaflet1[5] + "  |");
             Console.WriteLine("-----------------------");
-            Console.WriteLine("FUEL: "+currentFUEL);
-            Console.WriteLine("Creature Life: " + creatureLife);
-            Console.WriteLine("Completed Leaflets: " + completedLeaflets);
-            Console.WriteLine("Cycle: "+ TotalCognitiveCycle);
-            Console.WriteLine("Choosen action: " + currentAction);
+            Console.WriteLine("");
             Console.WriteLine("Goal: " + CurrentAgent.CurrentGoal.LabelAsIComparable);
+            Console.WriteLine("Things: " + myThings);
+            if (CurrentAgent.CurrentGoal == gSearchGems)
+            {
+                Console.WriteLine((stateChangedGem() ? "Gem State: Changed  " : "Gem State: NO Change"));
+                Console.WriteLine("Distance to Gem:" + ((thelastGemDistance-currentGemDistance>0)? "CLOSER" : ((thelastGemDistance - currentGemDistance == 0) ? "SAME" : "FARTHER")));
+                Console.WriteLine("|" + (thelastGemInSide ? "x" : " ") + (currentGemInSide ? "X" : " ") + "|"
+                    + (thelastGemInFront ? "x" : " ") + (currentGemInFront ? "X" : " ") +
+                    "|" + (thelastGemInSide ? "x" : " ") + (currentGemInSide ? "X" : " ") + "|");
+                Console.WriteLine("|   " + (thelastObjTouch ? "." : " ") + (currentObjTouch ? "o" : " ") + "   |");
+            }
+            else
+            {
+                Console.WriteLine((stateChangedFood() ? "Food State: Changed  " : "Food State: NO Change"));
+                Console.WriteLine("Distance to Food:" + ((thelastFoodDistance - currentFoodDistance > 0) ? "CLOSER" : ((thelastFoodDistance - currentFoodDistance == 0) ? "SAME" : "FARTHER")));
+                Console.WriteLine("|" + (thelastFoodInSide ? "o" : " ") + (currentFoodInSide ? "O" : " ") + "|"
+                    + (thelastFoodInFront ? "o" : " ") + (currentFoodInFront ? "O" : " ") +
+                    "|" + (thelastFoodInSide ? "o" : " ") + (currentFoodInSide ? "O" : " ") + "|");
+                Console.WriteLine("|   " + (thelastObjTouch ? "." : " ") + (currentObjTouch ? "o" : " ") + "   |");
+            }
+            Console.WriteLine("FUEL: " + currentFUEL);
+            Console.WriteLine("Choosen action: " + currentAction);
             Console.WriteLine("FeedBack given: " + currentFeedBack);
+            Console.WriteLine("");
+            Console.WriteLine("Cycle: " + TotalCognitiveCycle);
+            Console.WriteLine("Creature Life: " + creatureLife);
+            Console.WriteLine("Completed Leaflets: " + completedLeaflets + " (Jewels = "+collectedJewels+")");
+            ;
             //Console.WriteLine("Learned rules:");
             //foreach (var i in CurrentAgent.GetInternals(Agent.InternalContainers.ACTION_RULES))
             //{
             //    Console.WriteLine("\r\n" + i.ToString());
             //}
+
             
+            if (runCycles == 0)
+            {
+                //worldServer.SendStopCreature(creatureId);
+                Console.WriteLine("Run how many cycles before pausing again?");
+                string comand = Console.ReadLine();
+                if (!double.TryParse(comand, out runCycles))
+                {
+                    if (comand == "-1")
+                        runCycles = -1;
+                    runCycles = 0;
+                }
+                //worldServer.SendStartCreature(creatureId);
+            }
+            else if (runCycles <0)
+                Console.WriteLine("Auto running forever.");
+            else
+                Console.WriteLine("Running more "+runCycles+" cycles before pausing again.");
+            runCycles--;
 
         }
 
@@ -247,23 +399,6 @@ namespace ClarionDEMO
         }
 
         /// <summary>
-        /// Abort the current Simulation
-        /// </summary>
-        /// <param name="deleteAgent">If true beyond abort the current simulation it will die the agent.</param>
-        public void Abort(Boolean deleteAgent)
-        {   Console.WriteLine ("Aborting ...");
-            if (runThread != null && runThread.IsAlive)
-            {
-                runThread.Abort();
-            }
-
-            if (CurrentAgent != null && deleteAgent)
-            {
-                CurrentAgent.Die();
-            }
-        }
-
-        /// <summary>
         /// Returns a list of THINGs seen by the creature
         /// </summary>
         /// <returns></returns>
@@ -283,178 +418,6 @@ namespace ClarionDEMO
 			return response;
 		}
 
-
-        /// <summary>
-        /// Executes the action selected by the clarion agent
-        /// </summary>
-        /// <param name="externalAction"></param>
-		void processSelectedAction(CreatureActions externalAction)
-		{   Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-			if (worldServer != null && worldServer.IsConnected)
-			{
-                
-                currentAction = externalAction.ToString();
-                
-                switch (externalAction)
-                {
-                    case CreatureActions.GO_BACK:
-                        worldServer.SendSetAngle(creatureId, -0.5, -0.5, prad);
-                        // Do nothing as the own value says
-                        break;
-                    case CreatureActions.ROTATE_RIGHT:
-                        worldServer.SendSetAngle(creatureId, 0.3, -0.3, 0.3);
-                        break;
-                    case CreatureActions.ROTATE_LEFT:
-                        worldServer.SendSetAngle(creatureId, -0.3, 0.3, -0.3);
-                        break;
-                    case CreatureActions.GO_AHEAD:
-                        worldServer.SendSetAngle(creatureId, 1, 1, prad);
-                        break;
-                    case CreatureActions.EAT_FOOD:
-                        if (thingToEat != null && thingToEat.DistanceToCreature <= 25 && (thingToEat.CategoryId == Thing.categoryPFOOD || thingToEat.CategoryId == Thing.CATEGORY_NPFOOD))
-                        {
-                            worldServer.SendEatIt(creatureId, thingToEat.Name);
-                            thingToEat = null;
-                        }
-                        break;
-                    case CreatureActions.GET_ITEM:
-                        if (thingToGet != null && thingToGet.CategoryId == Thing.CATEGORY_JEWEL && thingToGet.DistanceToCreature <=30)
-                        {
-                            worldServer.SendSackIt(creatureId, thingToGet.Name);
-                            //manually update the creature leaflet
-                            //foreach (LeafletItem li in mycreature.getLeaflets().First().items)
-                            //{
-                            //    if (li.itemKey.Equals(thingToGet.Material.Color))
-                            //        if (li.totalNumber > 0)
-                            //        {
-                            //            li.totalNumber = li.totalNumber - 1;
-                            //            li.collected = li.collected + 1;
-                            //            updateLeaflet(mycreature);
-                            //            updateConsole();
-                            //            break;
-                            //        }
-                            //}
-                            
-                            if (leaflet1[parseColor(thingToGet.Material.Color)] > 0)
-                                leaflet1[parseColor(thingToGet.Material.Color)]--;
-
-                            thingToGet = null;
-                        }
-                        break;
-                    default:
-                        break;
-                }
-			}
-		}
-
-        /// <summary>
-        /// Setup agent infra structure (ACS, NACS, MS and MCS)
-        /// </summary>
-        private void SetupAgentInfraStructure()
-        {
-            SimplifiedQBPNetwork net = AgentInitializer.InitializeImplicitDecisionNetwork(CurrentAgent, SimplifiedQBPNetwork.Factory);
-
-            //defining GOALS nodes
-            net.Input.Add(gSearchFood, "goals");
-            net.Input.Add(gSearchGems, "goals");
-
-            //Defining visual input nodes
-            net.Input.Add(inputWallAhead  );
-            net.Input.Add(inputGemAhead   );
-            net.Input.Add(inputFoodAhead  );
-            net.Input.Add(inputGemUpRight );
-            net.Input.Add(inputGemUpLeft  );
-            net.Input.Add(inputGemUpFront );
-            net.Input.Add(inputFoodUpRight);
-            net.Input.Add(inputFoodUpLeft );
-            net.Input.Add(inputFoodUpFront);
-
-            //defining output nodes
-            net.Output.Add(eacDO_NOTHING  );
-            net.Output.Add(eacROTATE_RIGHT);
-            net.Output.Add(eacROTATE_LEFT );
-            net.Output.Add(eacGO_AHEAD    );
-            net.Output.Add(eacGET_ITEM    );
-            net.Output.Add(eacEAT_FOOD    );
-
-
-            net.Parameters.LEARNING_RATE = 1;
-            CurrentAgent.Commit(net);
-                      
-            CurrentAgent.ACS.Parameters.VARIABLE_BL_BETA = .5;
-            CurrentAgent.ACS.Parameters.VARIABLE_RER_BETA = .5;
-            CurrentAgent.ACS.Parameters.VARIABLE_IRL_BETA = 0;
-            CurrentAgent.ACS.Parameters.VARIABLE_FR_BETA = 0;
-
-            RefineableActionRule.GlobalParameters.SPECIALIZATION_THRESHOLD_1 = -.6;
-            RefineableActionRule.GlobalParameters.GENERALIZATION_THRESHOLD_1 = -.1;
-            RefineableActionRule.GlobalParameters.INFORMATION_GAIN_OPTION = RefineableActionRule.IGOptions.PERFECT;
-
-            //Initialising food drive
-            FoodDrive foodDrive = AgentInitializer.InitializeDrive(CurrentAgent, FoodDrive.Factory,1.0, (DeficitChangeProcessor)FoodDrive_DeficitChange);
-            DriveEquation foodDriveEQ = AgentInitializer.InitializeDriveComponent(foodDrive, DriveEquation.Factory);
-
-            foodDrive.Commit(foodDriveEQ);
-            CurrentAgent.Commit(foodDrive);
-
-            //Initialising gem drive
-            AutonomyDrive gemDrive = AgentInitializer.InitializeDrive(CurrentAgent, AutonomyDrive.Factory,1.0, (DeficitChangeProcessor)GemDrive_DeficitChange);
-            DriveEquation gemDriveEQ = AgentInitializer.InitializeDriveComponent(gemDrive, DriveEquation.Factory);
-
-            gemDrive.Commit(gemDriveEQ);
-            CurrentAgent.Commit(gemDrive);
-
-            //initialising goal module and equation
-            GoalSelectionModule gsm = AgentInitializer.InitializeMetaCognitiveModule(CurrentAgent, GoalSelectionModule.Factory);
-            GoalSelectionEquation gse = AgentInitializer.InitializeMetaCognitiveDecisionNetwork(gsm, GoalSelectionEquation.Factory);
-
-            gse.Input.Add(gemDrive.GetDriveStrength());
-            gse.Input.Add(foodDrive.GetDriveStrength());
-
-            GoalStructureUpdateActionChunk fu = World.NewGoalStructureUpdateActionChunk();
-            GoalStructureUpdateActionChunk nu = World.NewGoalStructureUpdateActionChunk();
-
-            nu.Add(GoalStructure.RecognizedActions.SET_RESET, gSearchGems);
-            fu.Add(GoalStructure.RecognizedActions.SET_RESET, gSearchFood);
-  
-            gse.Output.Add(nu);
-            gse.Output.Add(fu);
-
-            gsm.SetRelevance(nu, gemDrive, 1);
-            gsm.SetRelevance(fu, foodDrive, 1);
-
-            //commits drives
-            gsm.Commit(gse);
-            CurrentAgent.Commit(gsm);
-
-            //goal should be activated to full extension when it is selected
-            CurrentAgent.MS.Parameters.CURRENT_GOAL_ACTIVATION_OPTION = MotivationalSubsystem.CurrentGoalActivationOptions.FULL;
-        }
-        
-        /// <summary>
-        /// Saves the current state of the creature
-        /// </summary>
-        /// <param name="listOfThings"></param>
-        private void stateToMemory(IList<Thing> listOfThings)
-        {
-            Thing cthing = listOfThings.Where(item => (item.CategoryId == Thing.CATEGORY_CREATURE)).First();
-            Creature c = (Creature)cthing;
-           
-            currentFUEL = c.Fuel;
-       
-            currentLeaf = updateLeaflet(c);
-           
-            currentFoodInFront = listOfThings.Where(item => (upfront(cthing, item) && (item.CategoryId == Thing.categoryPFOOD || item.CategoryId == Thing.CATEGORY_NPFOOD))).Any();
-
-            currentFoodInSide = listOfThings.Where(item => ((upRight(cthing, item)|| upLeft(cthing, item)) && (item.CategoryId == Thing.categoryPFOOD || item.CategoryId == Thing.CATEGORY_NPFOOD))).Any();
-
-            currentGemInFront = listOfThings.Where(item => (upfront(cthing, item) && item.CategoryId == Thing.CATEGORY_JEWEL && leaflet1[parseColor(item.Material.Color)] > 0)).Any();
-
-            currentGemInSide = listOfThings.Where(item => ((upRight(cthing, item) || upLeft(cthing, item)) && item.CategoryId == Thing.CATEGORY_JEWEL && leaflet1[parseColor(item.Material.Color)] > 0)).Any();
-
-            currentObjTouch = listOfThings.Where(item => (item.DistanceToCreature<40 && item.CategoryId == Thing.CATEGORY_CREATURE)).Any();
-        }
-
         /// <summary>
         /// Make the agent perception. Translate the information to feed each Input Node.
         /// </summary>
@@ -464,7 +427,7 @@ namespace ClarionDEMO
         {
             // New sensory information
             SensoryInformation si = World.NewSensoryInformation(CurrentAgent);
-            si[FoodDrive.MetaInfoReservations.STIMULUS, typeof(FoodDrive).Name] = 1;
+
             bool aux;
             double activation;
 
@@ -472,23 +435,23 @@ namespace ClarionDEMO
             Creature c = (Creature)cthing;
             mycreature = c;
 
-            // Detect if we have a wall ahead
-            aux = listOfThings.Where(item => (item.CategoryId == Thing.CATEGORY_BRICK && item.DistanceToCreature <= 65)).Any();
-            activation = aux ? CurrentAgent.Parameters.MAX_ACTIVATION : CurrentAgent.Parameters.MIN_ACTIVATION;
-            si.Add(inputWallAhead, activation);
+            // Detect if we have a obj ahead
+            //aux = listOfThings.Where(item => (item.CategoryId != Thing.CATEGORY_CREATURE && item.DistanceToCreature <= TouchDistance)).Any();
+            //activation = aux ? CurrentAgent.Parameters.MAX_ACTIVATION : CurrentAgent.Parameters.MIN_ACTIVATION;
+            //si.Add(inputObjAhead, activation);
 
             // Detect if we have gem ahead
-            aux = listOfThings.Where(item => (item.CategoryId == Thing.CATEGORY_JEWEL && item.DistanceToCreature <= 40)).Any();
+            aux = listOfThings.Where(item => (item.CategoryId == Thing.CATEGORY_JEWEL && item.DistanceToCreature <= TouchDistance)).Any();
             if (aux)
-            thingToGet = listOfThings.Where(item => (item.CategoryId == Thing.CATEGORY_JEWEL && item.DistanceToCreature <= 40)).First();
+                thingToGet = listOfThings.Where(item => (item.CategoryId == Thing.CATEGORY_JEWEL && item.DistanceToCreature <= TouchDistance)).OrderBy(item => item.DistanceToCreature).First();
             activation = aux ? CurrentAgent.Parameters.MAX_ACTIVATION : CurrentAgent.Parameters.MIN_ACTIVATION;
             si.Add(inputGemAhead, activation);
 
             // Detect if we have food ahead
-            aux = listOfThings.Where(item => ((item.CategoryId == Thing.categoryPFOOD || item.CategoryId == Thing.CATEGORY_NPFOOD) && item.DistanceToCreature <= 40)).Any();
+            aux = listOfThings.Where(item => ((item.CategoryId == Thing.categoryPFOOD || item.CategoryId == Thing.CATEGORY_NPFOOD) && item.DistanceToCreature <= TouchDistance)).Any();
             activation = aux ? CurrentAgent.Parameters.MAX_ACTIVATION : CurrentAgent.Parameters.MIN_ACTIVATION;
-            if(aux)
-            thingToEat = listOfThings.Where(item => ((item.CategoryId == Thing.categoryPFOOD || item.CategoryId == Thing.CATEGORY_NPFOOD) && item.DistanceToCreature <= 40)).First();
+            if (aux)
+                thingToEat = listOfThings.Where(item => ((item.CategoryId == Thing.categoryPFOOD || item.CategoryId == Thing.CATEGORY_NPFOOD) && item.DistanceToCreature <= TouchDistance)).OrderBy(item => item.DistanceToCreature).First();
             si.Add(inputFoodAhead, activation);
 
             // Detect if we have food Up front
@@ -521,11 +484,155 @@ namespace ClarionDEMO
             activation = aux ? CurrentAgent.Parameters.MAX_ACTIVATION : CurrentAgent.Parameters.MIN_ACTIVATION;
             si.Add(inputGemUpLeft, activation);
 
-            int n = 0;
             updateLeaflet(c);
             return si;
         }
-        
+
+        /// <summary>
+        /// Executes the action selected by the clarion agent
+        /// </summary>
+        /// <param name="externalAction"></param>
+		void processSelectedAction(CreatureActions externalAction)
+		{   Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+			if (worldServer != null && worldServer.IsConnected)
+			{
+                
+                currentAction = externalAction.ToString();
+                
+                switch (externalAction)
+                {
+                    case CreatureActions.GO_BACK:
+                        worldServer.SendSetAngle(creatureId, -0.5, -0.5, prad);
+                        // Do nothing as the own value says
+                        break;
+                    case CreatureActions.ROTATE_RIGHT:
+                        worldServer.SendSetAngle(creatureId, 0.3, -0.3, 0.3);
+                        break;
+                    case CreatureActions.ROTATE_LEFT:
+                        worldServer.SendSetAngle(creatureId, -0.3, 0.3, -0.3);
+                        break;
+                    case CreatureActions.GO_AHEAD:
+                        worldServer.SendSetAngle(creatureId, 1, 1, prad);
+                        break;
+                    case CreatureActions.EAT_FOOD:
+                        if (thingToEat != null && thingToEat.DistanceToCreature <= TouchDistance && (thingToEat.CategoryId == Thing.categoryPFOOD || thingToEat.CategoryId == Thing.CATEGORY_NPFOOD))
+                        {
+                            worldServer.SendEatIt(creatureId, thingToEat.Name);
+                            thingToEat = null;
+                        }
+                        break;
+                    case CreatureActions.GET_ITEM:
+                        if (thingToGet != null && thingToGet.CategoryId == Thing.CATEGORY_JEWEL && thingToGet.DistanceToCreature <= TouchDistance)
+                        {
+                            worldServer.SendSackIt(creatureId, thingToGet.Name);
+                            //manually update the creature leaflet
+                            //foreach (LeafletItem li in mycreature.getLeaflets().First().items)
+                            //{
+                            //    if (li.itemKey.Equals(thingToGet.Material.Color))
+                            //        if (li.totalNumber > 0)
+                            //        {
+                            //            li.totalNumber = li.totalNumber - 1;
+                            //            li.collected = li.collected + 1;
+                            //            updateLeaflet(mycreature);
+                            //            updateConsole();
+                            //            break;
+                            //        }
+                            //}
+                            
+                            if (leaflet1[parseColor(thingToGet.Material.Color)] > 0)
+                            {
+                                leaflet1[parseColor(thingToGet.Material.Color)]--;
+                                collectedJewels++;
+                            }
+                                
+
+                            thingToGet = null;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+			}
+		}
+
+        /// <summary>
+        /// Saves the current state of the creature
+        /// </summary>
+        /// <param name="listOfThings"></param>
+        private void stateToMemory(IList<Thing> listOfThings)
+        {
+            //update current memory and last memory state
+            thelastFUEL = currentFUEL;
+            thelastLeaf = currentLeaf;
+            thelastFoodInFront = currentFoodInFront;
+            thelastFoodInSide = currentFoodInSide;
+            thelastGemInFront = currentGemInFront;
+            thelastGemInSide = currentGemInSide;
+            thelastObjTouch = currentObjTouch;
+            thelastFoodDistance = currentFoodDistance;
+            thelastGemDistance = currentGemDistance;
+            myThings = "";
+            foreach(Thing thing in listOfThings)
+            {
+                if(thing.CategoryId!=Thing.CATEGORY_CREATURE)
+                myThings = myThings + " | (" + thing.CategoryId + ")" + thing.Material.Color+"["+thing.DistanceToCreature+"]";
+            }
+
+
+            Thing cthing = listOfThings.Where(item => (item.CategoryId == Thing.CATEGORY_CREATURE)).First();
+            Creature c = (Creature)cthing;
+           
+            currentFUEL = c.Fuel;
+       
+            currentLeaf = updateLeaflet(c);
+           
+            currentFoodInFront = listOfThings.Where(item => (upfront(cthing, item) && (item.CategoryId == Thing.categoryPFOOD || item.CategoryId == Thing.CATEGORY_NPFOOD))).Any();
+
+            currentFoodInSide = listOfThings.Where(item => ((upRight(cthing, item)|| upLeft(cthing, item)) && (item.CategoryId == Thing.categoryPFOOD || item.CategoryId == Thing.CATEGORY_NPFOOD))).Any();
+
+            currentGemInFront = listOfThings.Where(item => (upfront(cthing, item) && item.CategoryId == Thing.CATEGORY_JEWEL && leaflet1[parseColor(item.Material.Color)] > 0)).Any();
+
+            currentGemInSide = listOfThings.Where(item => ((upRight(cthing, item) || upLeft(cthing, item)) && item.CategoryId == Thing.CATEGORY_JEWEL && leaflet1[parseColor(item.Material.Color)] > 0)).Any();
+
+            currentObjTouch = listOfThings.Where(item => (item.DistanceToCreature <= TouchDistance && item.CategoryId != Thing.CATEGORY_CREATURE)).Any();
+
+            currentGemDistance = 1000;
+            if (listOfThings.Where(item => item.CategoryId == Thing.CATEGORY_JEWEL && leaflet1[parseColor(item.Material.Color)] > 0).Any())
+            currentGemDistance = listOfThings.Where(item=> item.CategoryId == Thing.CATEGORY_JEWEL && leaflet1[parseColor(item.Material.Color)] > 0).Min(Item=>Item.DistanceToCreature);
+
+            currentFoodDistance = 1000;
+            if(listOfThings.Where(item => item.CategoryId == Thing.categoryPFOOD || item.CategoryId == Thing.CATEGORY_NPFOOD).Any())
+            currentFoodDistance = listOfThings.Where(item => item.CategoryId == Thing.categoryPFOOD || item.CategoryId == Thing.CATEGORY_NPFOOD).Min(Item => Item.DistanceToCreature);
+        }
+
+        /// <summary>
+        /// Returns true if memory state changed regarding perceived Jewels
+        /// </summary>
+        /// <returns></returns>
+        private bool stateChangedGem()
+        {
+            if (thelastObjTouch == currentObjTouch &&
+                thelastLeaf == currentLeaf &&
+                thelastGemInSide == currentGemInSide &&
+                thelastGemInFront == currentGemInFront &&
+                thelastGemDistance == currentGemDistance)
+                return false;
+            return true;
+        }
+
+        /// <summary>
+        /// Returns true if memory state changed regarding perceived foods
+        /// </summary>
+        /// <returns></returns>
+        private bool stateChangedFood()
+        {
+            if (thelastObjTouch == currentObjTouch &&
+                thelastFoodInSide == currentFoodInSide &&
+                thelastFoodInFront == currentFoodInFront &&
+                thelastFoodDistance == currentFoodDistance)
+                return false;
+            return true;
+        }
 
         /// <summary>
         /// Runs 1 cognitive cycle. Perceive world > makes decision > send action > wait a bit > give feedback of action results.
@@ -574,15 +681,6 @@ namespace ClarionDEMO
                 }
                 worldServer.SendSetAngle(creatureId, 0.0, 0.0, prad);
 
-                //update current memory and last memory state
-                thelastFUEL = currentFUEL;
-                thelastLeaf = currentLeaf;
-                thelastFoodInFront = currentFoodInFront;
-                thelastFoodInSide = currentFoodInSide;
-                thelastGemInFront = currentGemInFront;
-                thelastGemInSide = currentGemInSide;
-                thelastObjTouch = currentObjTouch;
-
                 currentSceneInWS3D = processSensoryInformation();
                 stateToMemory(currentSceneInWS3D);
 
@@ -595,7 +693,7 @@ namespace ClarionDEMO
                 if (mycreature.Fuel <= 0 || updateLeaflet(mycreature)==0)
                 {
                     worldServer.SendWorldReset();
-                    worldServer.NewCreature(400, 240, 0, out creatureId, out creatureName);
+                    worldServer.NewCreature(400, 300, 0, out creatureId, out creatureName);
                     worldServer.SendCreateLeaflet();
                     Random rand = new Random(DateTime.Now.Millisecond);
                     int j = 0;
@@ -635,7 +733,7 @@ namespace ClarionDEMO
 
                     StreamWriter configWriter;
                     configWriter = new StreamWriter("LearnedRules.txt", false);
-                    configWriter.Write("After " + TotalCognitiveCycle + " cogcycles within " + creatureLife + " creature lifes, the creature completed " + completedLeaflets + " leaflets");
+                    configWriter.Write("After " + TotalCognitiveCycle + " cogcycles within " + creatureLife + " creature lifes, the creature completed " + completedLeaflets + " leaflets (Jewels = " + collectedJewels + ")");
                     configWriter.Write("\r\nIt has also learned the following rules:");
                     foreach (var i in CurrentAgent.GetInternals(Agent.InternalContainers.ACTION_RULES))
                     {
@@ -647,7 +745,6 @@ namespace ClarionDEMO
             }
         }
         
-
         /// <summary>
         /// Gives feed back to the agent based on previous state and new state
         /// </summary>
@@ -658,56 +755,65 @@ namespace ClarionDEMO
             
             if (CurrentAgent.CurrentGoal == gSearchFood)
             {
-                if (thelastFUEL >= 300) 
-                    currentFeedBack = 0;
-                else if (currentFUEL > thelastFUEL)
-                    currentFeedBack = 1;
+                if (thelastFUEL >= minFood)
+                    currentFeedBack = 0.0;
+                //good feedback
+                else if (currentLeaf < thelastLeaf)
+                    currentFeedBack = 1.0;
+                else if (currentFoodDistance < thelastFoodDistance)
+                    currentFeedBack = 0.9;
                 else if (currentFoodInFront == true && thelastFoodInFront == false)
                     currentFeedBack = 0.9;
-                else if (currentFoodInFront == false && thelastFoodInFront == true && actionType != CreatureActions.GO_AHEAD)
-                    currentFeedBack = 0.0;
-                else if (thelastFoodInFront == true && thelastObjTouch==false && actionType == CreatureActions.GO_AHEAD)
-                    currentFeedBack = 1.0;
                 else if (currentFoodInSide == true && thelastFoodInSide == false)
                     currentFeedBack = 0.9;
+                else if (currentObjTouch == false && thelastObjTouch == true)
+                    currentFeedBack = 0.7;
                 else if (thelastFoodInFront == false && thelastFoodInSide == false && actionType == CreatureActions.ROTATE_RIGHT)
+                    currentFeedBack = 0.6;
+                //neutral feedback
+                else if (!stateChangedFood())
                     currentFeedBack = 0.5;
-                else if (currentFoodInSide == true && thelastFoodInSide == true && actionType != CreatureActions.GO_BACK)
-                    currentFeedBack = 0.5;
+                //bad feedback
+                else if (currentFoodDistance > thelastFoodDistance)
+                    currentFeedBack = 0.0;
+                else if (currentFoodInFront == false && thelastFoodInFront == true)
+                    currentFeedBack = 0.0;
                 else if (currentFoodInSide == false && thelastFoodInSide == true)
                     currentFeedBack = 0.0;
-                else if ((currentFoodInSide == true || currentFoodInFront == true) && actionType == CreatureActions.GO_BACK)
-                    currentFeedBack = 0.0;
                 else
-                    currentFeedBack = 0.0;
+                    currentFeedBack = 0.0; //should not hapen
                 return currentFeedBack;
             }
             else if (CurrentAgent.CurrentGoal == gSearchGems)
             {
-                if (thelastFUEL < 300)
-                    currentFeedBack = 0;
+                if (thelastFUEL < minFood)
+                    currentFeedBack = 0.0;
+                //good feedback
                 else if (currentLeaf < thelastLeaf)
-                    currentFeedBack = 1;
+                    currentFeedBack = 1.0;
+                else if (currentGemDistance < thelastGemDistance)
+                    currentFeedBack = 0.9;
                 else if (currentGemInFront == true && thelastGemInFront == false)
                     currentFeedBack = 0.9;
-                else if (currentGemInFront == false && thelastGemInFront == true && actionType != CreatureActions.GO_AHEAD)
-                    currentFeedBack = 0.0;
-                else if (thelastGemInFront == true && thelastObjTouch == false && actionType == CreatureActions.GO_AHEAD)
-                    currentFeedBack = 1.0;
                 else if (currentGemInSide == true && thelastGemInSide == false)
                     currentFeedBack = 0.9;
+                else if (currentObjTouch == false && thelastObjTouch == true)
+                    currentFeedBack = 0.7;
                 else if (thelastGemInFront == false && thelastGemInSide == false && actionType == CreatureActions.ROTATE_RIGHT)
+                    currentFeedBack = 0.6;
+                //neutral feedback
+                else if (!stateChangedGem())
                     currentFeedBack = 0.5;
-                else if (currentGemInSide == true && thelastGemInSide == true && actionType != CreatureActions.GO_BACK)
-                    currentFeedBack = 0.5;
+                //bad feedback
+                else if (currentGemDistance > thelastGemDistance)
+                    currentFeedBack = 0.0;
+                else if (currentGemInFront == false && thelastGemInFront == true)
+                    currentFeedBack = 0.0;
                 else if (currentGemInSide == false && thelastGemInSide == true)
                     currentFeedBack = 0.0;
-                else if ((currentGemInSide == true || currentGemInFront == true)&& actionType == CreatureActions.GO_BACK)
-                    currentFeedBack = 0.0;
                 else
-                    currentFeedBack = 0.0;
+                    currentFeedBack = 0.0; //should not hapen
                 return currentFeedBack;
-
             }
             currentFeedBack = 0.5;
             return currentFeedBack;
@@ -812,7 +918,7 @@ namespace ClarionDEMO
         /// <returns></returns>
         private double FoodDrive_DeficitChange(ActivationCollection si, Drive target)
         {
-            if (currentFUEL < 300)
+            if (currentFUEL < minFood)
                 return 1.0;
             return 0.0;
         }
@@ -825,7 +931,7 @@ namespace ClarionDEMO
         /// <returns></returns>
         private double GemDrive_DeficitChange(ActivationCollection si, Drive target)
         {
-            if (currentFUEL>=300)
+            if (currentFUEL>=minFood)
                 return 1.0;
             return 0.0;
         }
