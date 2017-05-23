@@ -52,6 +52,7 @@ namespace ClarionDEMO
         string currentAction="";
         double currentFeedBack;
         public int[] leaflet1 = new int[6] { 0, 0, 0, 0, 0, 0};
+        public DateTime startTime;
 
         #endregion
 
@@ -110,19 +111,20 @@ namespace ClarionDEMO
         public double MaxNumberOfCognitiveCycles = -1;
         // Current cognitive cycle parameters
         private double runCycles = 0;
+        private bool displayConsole = true;
         private double CurrentCognitiveCycle = 0;
         private double TotalCognitiveCycle = 0;
         private int completedLeaflets = 0;
         public int collectedJewels = 0;
         // Time between cognitive cycle in miliseconds
-        public Int32 TimeBetweenCognitiveCycles = 300;
+        public Int32 TimeBetweenCognitiveCycles = 150;
         //Fuel to start looking for food
         public int minFood = 400;
         //Distance to consider touched
         public double TouchDistance = 30;
-        public double forwardSpeed = 1.5;
-        public double backwardSpeed = 0.8;
-        public double turnSpeed = 0.4;
+        public double forwardSpeed = 0.5;
+        public double backwardSpeed = 0.3;
+        public double turnSpeed = 0.1;
         // A thread Class that will handle the simulation process
         private Thread runThread;
 
@@ -260,7 +262,8 @@ namespace ClarionDEMO
             //initializes goal chunks
             gSearchFood = World.NewGoalChunk(SearchFood);
             gSearchGems = World.NewGoalChunk(SearchGem);
-            
+
+            startTime = DateTime.Now;
             //Create thread to run simulation
             runThread = new Thread(CognitiveCycle);
 			Console.WriteLine("Agent started");
@@ -304,6 +307,10 @@ namespace ClarionDEMO
         /// </summary>
         public void updateConsole()
         {
+
+            if (runCycles != 0 && displayConsole == false)
+                return;
+
             Console.Clear();
             Console.CursorTop = 0;
             Console.CursorLeft = 0;
@@ -315,6 +322,7 @@ namespace ClarionDEMO
             Console.WriteLine("-----------------------");
             Console.WriteLine("");
             Console.WriteLine("Goal: " + CurrentAgent.CurrentGoal.LabelAsIComparable);
+            Console.WriteLine("C Pitch: " + (int)mycreature.Pitch);
             Console.WriteLine("Things: " + myThings);
             if (CurrentAgent.CurrentGoal == gSearchGems)
             {
@@ -567,6 +575,10 @@ namespace ClarionDEMO
         /// <param name="listOfThings"></param>
         private void stateToMemory(IList<Thing> listOfThings)
         {
+
+            mycreaturething = listOfThings.Where(item => (item.CategoryId == Thing.CATEGORY_CREATURE)).First();
+            mycreature = (Creature)mycreaturething;
+
             //update current memory and last memory state
             thelastFUEL = currentFUEL;
             thelastLeaf = currentLeaf;
@@ -588,8 +600,8 @@ namespace ClarionDEMO
             }
 
 
-            Thing cthing = listOfThings.Where(item => (item.CategoryId == Thing.CATEGORY_CREATURE)).First();
-            Creature c = (Creature)cthing;
+            Thing cthing = mycreaturething;
+            Creature c = (Creature)mycreature;
            
             currentFUEL = c.Fuel;
        
@@ -658,8 +670,7 @@ namespace ClarionDEMO
                 // Get current sensory information                    
                 IList<Thing> currentSceneInWS3D = processSensoryInformation();
 
-                mycreaturething = currentSceneInWS3D.Where(item => (item.CategoryId == Thing.CATEGORY_CREATURE)).First();
-                mycreature = (Creature)mycreaturething;
+                
 
                 //Saves the current state of teh creatue on the memory
                 stateToMemory(currentSceneInWS3D);
@@ -704,6 +715,9 @@ namespace ClarionDEMO
                 if (updateLeaflet(mycreature) == 0) completedLeaflets++;
                 if (mycreature.Fuel <= 0 || updateLeaflet(mycreature)==0)
                 {
+
+                    recordCreatureLife();
+
                     worldServer.SendWorldReset();
                     worldServer.NewCreature(400, 300, 0, out creatureId, out creatureName);
                     worldServer.SendCreateLeaflet();
@@ -734,6 +748,7 @@ namespace ClarionDEMO
                     //leaflet1[rand.Next(0, 5)]++;
                     updateLeaflet(mycreature);
                     creatureLife++;
+                    startTime = DateTime.Now;
                     CurrentCognitiveCycle = 0;
                 }
 
@@ -742,7 +757,26 @@ namespace ClarionDEMO
                     recordLearnedRules();
             }
         }
-        
+
+
+        /// <summary>
+        /// Record the performance of teh creature for the current life
+        /// </summary>
+        public void recordCreatureLife()
+        {
+            if(creatureLife==1)
+                    File.WriteAllText("SuccessRecord.txt", "Creature Life;Creature Status;Collected Jewels;Completed Leaflets;Amount Learned Rules;Success Rate;Time[s]\r\n");
+            string Rules = "";
+                foreach (var i in CurrentAgent.GetInternals(Agent.InternalContainers.ACTION_RULES))
+            {
+                Rules+=("<" + i+">");
+            }
+            string text = creatureLife + ";" + ((currentFUEL <= 0) ? "LOOSER" : "WINNER") + ";" + collectedJewels + ";" + completedLeaflets + ";" + CurrentAgent.GetInternals(Agent.InternalContainers.ACTION_RULES).Count() + ";" + (((double)completedLeaflets) / creatureLife) + ";" + (DateTime.Now-startTime).Seconds;
+            StreamWriter Writer = new StreamWriter("SuccessRecord.txt", true);
+            Writer.WriteLine(text);
+            Writer.Flush();
+            Writer.Close();
+        }
 
         /// <summary>
         /// Record the list of learned rules to a .txt file on the app folder
@@ -764,6 +798,7 @@ namespace ClarionDEMO
                 configWriter.Write("\r\n" + i);
                 //Console.WriteLine("\r\n" + i.ToString());
             }
+            configWriter.Flush();
             configWriter.Close();
         }
 
@@ -862,6 +897,7 @@ namespace ClarionDEMO
             double xDiff = thing.comX - creature.X1;
             double yDiff = thing.comY - creature.Y1;
             double Tang = Math.Atan2(yDiff, xDiff) * 180.0 / Math.PI;
+            if (Tang < 0) Tang += 360;
             if (Math.Abs(Cang - Tang) <= 6 || Math.Abs(Cang - Tang) >= 354)
                 return true;
             return false;
@@ -900,6 +936,7 @@ namespace ClarionDEMO
             double xDiff = thing.comX - creature.X1;
             double yDiff = thing.comY - creature.Y1;
             double Tang = Math.Atan2(yDiff, xDiff) * 180.0 / Math.PI;
+            if (Tang < 0) Tang += 360;
             //Console.WriteLine("CreatureXY=" + creature.X1 + "," + creature.Y1 + " ThingXY=" + thing.comX + "," + thing.comY);
             //Console.WriteLine("CreaturePitch=" + Cang + " Thingpitch(id:" + thing.CategoryId + ")=" + Tang);
             double minang = (Cang + 6);
@@ -924,6 +961,7 @@ namespace ClarionDEMO
             double xDiff = thing.comX - creature.X1;
             double yDiff = thing.comY - creature.Y1;
             double Tang = Math.Atan2(yDiff, xDiff) * 180.0 / Math.PI;
+            if (Tang < 0) Tang += 360;
             double minang = (Cang - 90);
             double maxang = (Cang - 6);
             //Console.WriteLine("CreaturePitch=" + Cang + " Thingpitch(id:" + thing.CategoryId + ")=" + Tang);
