@@ -36,6 +36,7 @@ namespace ClarionDEMO
         String creatureId = String.Empty;
         String creatureName = String.Empty;
         Creature mycreature;
+        Thing mycreaturething;
         private double currentFUEL, thelastFUEL; 
         private int currentLeaf, thelastLeaf;
         bool currentObjTouch, thelastObjTouch;
@@ -74,6 +75,31 @@ namespace ClarionDEMO
         static private String SearchFood = "Search Food";
         static private String SearchGem = "Search Gem";
         double prad = 0;
+        // Declaring the agent
+        public Clarion.Framework.Agent CurrentAgent;
+
+        ///declaring inputs
+        private DimensionValuePair inputGemAhead;
+        private DimensionValuePair inputFoodAhead;
+        private DimensionValuePair inputGemUpRight;
+        private DimensionValuePair inputGemUpLeft;
+        private DimensionValuePair inputGemUpFront;
+        private DimensionValuePair inputFoodUpRight;
+        private DimensionValuePair inputFoodUpLeft;
+        private DimensionValuePair inputFoodUpFront;
+        //private DimensionValuePair inputObjAhead;
+
+        //declaring Actions
+        private ExternalActionChunk eacDO_NOTHING;
+        private ExternalActionChunk eacROTATE_RIGHT;
+        private ExternalActionChunk eacROTATE_LEFT;
+        private ExternalActionChunk eacGO_AHEAD;
+        private ExternalActionChunk eacGET_ITEM;
+        private ExternalActionChunk eacEAT_FOOD;
+
+        //declaring goals
+        private GoalChunk gSearchFood;
+        private GoalChunk gSearchGems;
 
         #endregion
 
@@ -82,49 +108,26 @@ namespace ClarionDEMO
         public double creatureLife=1;
         // If this value is greater than zero, the agent will have a finite number of cognitive cycle. Otherwise, it will have infinite cycles.
         public double MaxNumberOfCognitiveCycles = -1;
-        // Current cognitive cycle number
+        // Current cognitive cycle parameters
         private double runCycles = 0;
         private double CurrentCognitiveCycle = 0;
         private double TotalCognitiveCycle = 0;
         private int completedLeaflets = 0;
         public int collectedJewels = 0;
         // Time between cognitive cycle in miliseconds
-        public Int32 TimeBetweenCognitiveCycles = 600;
+        public Int32 TimeBetweenCognitiveCycles = 300;
         //Fuel to start looking for food
         public int minFood = 400;
         //Distance to consider touched
-        public int TouchDistance = 35;
+        public double TouchDistance = 30;
+        public double forwardSpeed = 1.5;
+        public double backwardSpeed = 0.8;
+        public double turnSpeed = 0.4;
         // A thread Class that will handle the simulation process
         private Thread runThread;
 
         // Declaring the world
 		private WorldServer worldServer;
- 
-        // Declaring the agent
-        public Clarion.Framework.Agent CurrentAgent;
-
-        //declaring inputs
-		//private DimensionValuePair inputObjAhead    ;
-        private DimensionValuePair inputGemAhead     ;
-        private DimensionValuePair inputFoodAhead    ;
-        private DimensionValuePair inputGemUpRight   ;
-        private DimensionValuePair inputGemUpLeft    ;
-        private DimensionValuePair inputGemUpFront   ;
-        private DimensionValuePair inputFoodUpRight  ;
-        private DimensionValuePair inputFoodUpLeft   ;
-        private DimensionValuePair inputFoodUpFront  ;
-
-        //declaring Actions
-        private ExternalActionChunk eacDO_NOTHING         ;
-        private ExternalActionChunk eacROTATE_RIGHT       ;
-        private ExternalActionChunk eacROTATE_LEFT        ;
-        private ExternalActionChunk eacGO_AHEAD           ;
-        private ExternalActionChunk eacGET_ITEM           ;
-        private ExternalActionChunk eacEAT_FOOD           ;
-
-        //declaring goals
-        private GoalChunk gSearchFood;
-        private GoalChunk gSearchGems;
 
         #endregion
 
@@ -159,17 +162,17 @@ namespace ClarionDEMO
             net.Output.Add(eacEAT_FOOD);
 
 
-            net.Parameters.LEARNING_RATE = 1;
+            net.Parameters.LEARNING_RATE = .5; //1
             CurrentAgent.Commit(net);
 
-            CurrentAgent.ACS.Parameters.VARIABLE_BL_BETA = .5;
-            CurrentAgent.ACS.Parameters.VARIABLE_RER_BETA = .5;
-            CurrentAgent.ACS.Parameters.VARIABLE_IRL_BETA = 0;
-            CurrentAgent.ACS.Parameters.VARIABLE_FR_BETA = 0;
+            CurrentAgent.ACS.Parameters.VARIABLE_BL_BETA = .5; //.5
+            CurrentAgent.ACS.Parameters.VARIABLE_RER_BETA = .5; //.5
+            CurrentAgent.ACS.Parameters.VARIABLE_IRL_BETA = .5; //0
+            CurrentAgent.ACS.Parameters.VARIABLE_FR_BETA = .5; //0
 
-            RefineableActionRule.GlobalParameters.SPECIALIZATION_THRESHOLD_1 = -.6;
-            RefineableActionRule.GlobalParameters.GENERALIZATION_THRESHOLD_1 = -.1;
-            RefineableActionRule.GlobalParameters.INFORMATION_GAIN_OPTION = RefineableActionRule.IGOptions.PERFECT;
+            RefineableActionRule.GlobalParameters.SPECIALIZATION_THRESHOLD_1 = -.6; //-0.6
+            RefineableActionRule.GlobalParameters.GENERALIZATION_THRESHOLD_1 = -.2; //-0.1
+            RefineableActionRule.GlobalParameters.INFORMATION_GAIN_OPTION = RefineableActionRule.IGOptions.PERFECT; //.PERFECT
 
             //Initialising food drive
             FoodDrive foodDrive = AgentInitializer.InitializeDrive(CurrentAgent, FoodDrive.Factory, 1.0, (DeficitChangeProcessor)FoodDrive_DeficitChange);
@@ -338,18 +341,19 @@ namespace ClarionDEMO
             Console.WriteLine("Cycle: " + TotalCognitiveCycle);
             Console.WriteLine("Creature Life: " + creatureLife);
             Console.WriteLine("Completed Leaflets: " + completedLeaflets + " (Jewels = "+collectedJewels+")");
-            ;
+            Console.WriteLine("learned Rules: "+CurrentAgent.GetInternals(Agent.InternalContainers.ACTION_RULES).Count());
             //Console.WriteLine("Learned rules:");
             //foreach (var i in CurrentAgent.GetInternals(Agent.InternalContainers.ACTION_RULES))
             //{
             //    Console.WriteLine("\r\n" + i.ToString());
             //}
 
-            
+
             if (runCycles == 0)
             {
                 //worldServer.SendStopCreature(creatureId);
-                Console.WriteLine("Run how many cycles before pausing again?");
+                Console.WriteLine("");
+                Console.WriteLine("Run how many cycles before pausing again?????? (-1 = forever)");
                 string comand = Console.ReadLine();
                 if (!double.TryParse(comand, out runCycles))
                 {
@@ -359,11 +363,13 @@ namespace ClarionDEMO
                 }
                 //worldServer.SendStartCreature(creatureId);
             }
-            else if (runCycles <0)
+            else if (runCycles < 0)
                 Console.WriteLine("Auto running forever.");
             else
-                Console.WriteLine("Running more "+runCycles+" cycles before pausing again.");
-            runCycles--;
+            {
+                Console.WriteLine("Running more " + runCycles + " cycles before pausing again.");
+                runCycles--;
+            }
 
         }
 
@@ -434,6 +440,7 @@ namespace ClarionDEMO
             Thing cthing = listOfThings.Where(item => (item.CategoryId == Thing.CATEGORY_CREATURE)).First();
             Creature c = (Creature)cthing;
             mycreature = c;
+            mycreaturething = cthing;
 
             // Detect if we have a obj ahead
             //aux = listOfThings.Where(item => (item.CategoryId != Thing.CATEGORY_CREATURE && item.DistanceToCreature <= TouchDistance)).Any();
@@ -502,17 +509,17 @@ namespace ClarionDEMO
                 switch (externalAction)
                 {
                     case CreatureActions.GO_BACK:
-                        worldServer.SendSetAngle(creatureId, -0.5, -0.5, prad);
+                        worldServer.SendSetAngle(creatureId, -backwardSpeed, -backwardSpeed, prad);
                         // Do nothing as the own value says
                         break;
                     case CreatureActions.ROTATE_RIGHT:
-                        worldServer.SendSetAngle(creatureId, 0.3, -0.3, 0.3);
+                        worldServer.SendSetAngle(creatureId, turnSpeed, -turnSpeed, turnSpeed);
                         break;
                     case CreatureActions.ROTATE_LEFT:
-                        worldServer.SendSetAngle(creatureId, -0.3, 0.3, -0.3);
+                        worldServer.SendSetAngle(creatureId, -turnSpeed, turnSpeed, -turnSpeed);
                         break;
                     case CreatureActions.GO_AHEAD:
-                        worldServer.SendSetAngle(creatureId, 1, 1, prad);
+                        worldServer.SendSetAngle(creatureId, forwardSpeed, forwardSpeed, prad);
                         break;
                     case CreatureActions.EAT_FOOD:
                         if (thingToEat != null && thingToEat.DistanceToCreature <= TouchDistance && (thingToEat.CategoryId == Thing.categoryPFOOD || thingToEat.CategoryId == Thing.CATEGORY_NPFOOD))
@@ -534,7 +541,6 @@ namespace ClarionDEMO
                             //            li.totalNumber = li.totalNumber - 1;
                             //            li.collected = li.collected + 1;
                             //            updateLeaflet(mycreature);
-                            //            updateConsole();
                             //            break;
                             //        }
                             //}
@@ -574,8 +580,11 @@ namespace ClarionDEMO
             myThings = "";
             foreach(Thing thing in listOfThings)
             {
-                if(thing.CategoryId!=Thing.CATEGORY_CREATURE)
-                myThings = myThings + " | (" + thing.CategoryId + ")" + thing.Material.Color+"["+thing.DistanceToCreature+"]";
+                if (thing.CategoryId != Thing.CATEGORY_CREATURE)
+                    myThings = myThings + "("+thing.CategoryId + ")" + thing.Material.Color 
+                        + "[" + (int)thing.DistanceToCreature + "]<" +(int)thingPitch(mycreaturething, thing)+">"
+                        +(upfront(mycreaturething,thing)?"F":"")
+                        + ((upLeft(mycreaturething, thing)|| upRight(mycreaturething, thing)) ? "S" : "") + " | ";
             }
 
 
@@ -648,6 +657,9 @@ namespace ClarionDEMO
 
                 // Get current sensory information                    
                 IList<Thing> currentSceneInWS3D = processSensoryInformation();
+
+                mycreaturething = currentSceneInWS3D.Where(item => (item.CategoryId == Thing.CATEGORY_CREATURE)).First();
+                mycreature = (Creature)mycreaturething;
 
                 //Saves the current state of teh creatue on the memory
                 stateToMemory(currentSceneInWS3D);
@@ -727,24 +739,35 @@ namespace ClarionDEMO
 
                 //Every 10 cycles, write learned rules to a .txt file
                 if (CurrentCognitiveCycle % 10 == 0)
-                {
-                    if (!File.Exists("LearnedRules.txt") == true)
-                        File.WriteAllText("LearnedRules.txt", "");
-
-                    StreamWriter configWriter;
-                    configWriter = new StreamWriter("LearnedRules.txt", false);
-                    configWriter.Write("After " + TotalCognitiveCycle + " cogcycles within " + creatureLife + " creature lifes, the creature completed " + completedLeaflets + " leaflets (Jewels = " + collectedJewels + ")");
-                    configWriter.Write("\r\nIt has also learned the following rules:");
-                    foreach (var i in CurrentAgent.GetInternals(Agent.InternalContainers.ACTION_RULES))
-                    {
-                        configWriter.Write("\r\n" + i);
-                        //Console.WriteLine("\r\n" + i.ToString());
-                    }
-                    configWriter.Close();
-                }
+                    recordLearnedRules();
             }
         }
         
+
+        /// <summary>
+        /// Record the list of learned rules to a .txt file on the app folder
+        /// </summary>
+        private void recordLearnedRules()
+        {
+            if (!File.Exists("LearnedRules.txt") == true)
+                File.WriteAllText("LearnedRules.txt", "");
+
+            StreamWriter configWriter;
+            configWriter = new StreamWriter("LearnedRules.txt", false);
+            configWriter.Write("Forward Speed: " + forwardSpeed + "   Backward Speed: " + backwardSpeed+"  Turn Speed:"+turnSpeed);
+            configWriter.Write("\r\nTimeBetween Cognitive Cycles: " + TimeBetweenCognitiveCycles);
+            configWriter.Write("\r\nIntouch Distance: " + TouchDistance + "  Fuel low level: " + minFood);
+            configWriter.Write("\r\nAfter " + TotalCognitiveCycle + " cogcycles within " + creatureLife + " creature lifes, the creature completed " + completedLeaflets + " leaflets (Jewels = " + collectedJewels + ")");
+            configWriter.Write("\r\nIt has also learned the following rules:\r\n");
+            foreach (var i in CurrentAgent.GetInternals(Agent.InternalContainers.ACTION_RULES))
+            {
+                configWriter.Write("\r\n" + i);
+                //Console.WriteLine("\r\n" + i.ToString());
+            }
+            configWriter.Close();
+        }
+
+
         /// <summary>
         /// Gives feed back to the agent based on previous state and new state
         /// </summary>
@@ -758,9 +781,9 @@ namespace ClarionDEMO
                 if (thelastFUEL >= minFood)
                     currentFeedBack = 0.0;
                 //good feedback
-                else if (currentLeaf < thelastLeaf)
+                else if (currentFUEL > thelastFUEL)
                     currentFeedBack = 1.0;
-                else if (currentFoodDistance < thelastFoodDistance)
+                else if ((currentFoodDistance < thelastFoodDistance) && (currentFoodInFront == true || currentFoodInSide == true) && thelastFoodDistance!=1000)
                     currentFeedBack = 0.9;
                 else if (currentFoodInFront == true && thelastFoodInFront == false)
                     currentFeedBack = 0.9;
@@ -768,11 +791,15 @@ namespace ClarionDEMO
                     currentFeedBack = 0.9;
                 else if (currentObjTouch == false && thelastObjTouch == true)
                     currentFeedBack = 0.7;
-                else if (thelastFoodInFront == false && thelastFoodInSide == false && actionType == CreatureActions.ROTATE_RIGHT)
-                    currentFeedBack = 0.6;
+                else if (thelastFoodInFront == false && thelastFoodInSide == false && actionType == CreatureActions.ROTATE_RIGHT && thelastObjTouch == false)
+                    currentFeedBack = 0.7;
                 //neutral feedback
-                else if (!stateChangedFood())
+                else if (currentFoodInFront == true && thelastFoodInFront == true)
                     currentFeedBack = 0.5;
+                else if (currentFoodInSide == true && thelastFoodInSide == true)
+                    currentFeedBack = 0.5;
+                //else if (!stateChangedFood())
+                //   currentFeedBack = 0.5;
                 //bad feedback
                 else if (currentFoodDistance > thelastFoodDistance)
                     currentFeedBack = 0.0;
@@ -791,7 +818,7 @@ namespace ClarionDEMO
                 //good feedback
                 else if (currentLeaf < thelastLeaf)
                     currentFeedBack = 1.0;
-                else if (currentGemDistance < thelastGemDistance)
+                else if ((currentGemDistance < thelastGemDistance) && (currentGemInFront == true || currentGemInSide == true) && thelastGemDistance != 1000)
                     currentFeedBack = 0.9;
                 else if (currentGemInFront == true && thelastGemInFront == false)
                     currentFeedBack = 0.9;
@@ -799,11 +826,15 @@ namespace ClarionDEMO
                     currentFeedBack = 0.9;
                 else if (currentObjTouch == false && thelastObjTouch == true)
                     currentFeedBack = 0.7;
-                else if (thelastGemInFront == false && thelastGemInSide == false && actionType == CreatureActions.ROTATE_RIGHT)
-                    currentFeedBack = 0.6;
+                else if (thelastGemInFront == false && thelastGemInSide == false && actionType == CreatureActions.ROTATE_RIGHT && thelastObjTouch == false)
+                    currentFeedBack = 0.7;
                 //neutral feedback
-                else if (!stateChangedGem())
+                else if (currentGemInFront == true && thelastGemInFront == true)
                     currentFeedBack = 0.5;
+                else if (currentGemInSide == true && thelastGemInSide == true)
+                    currentFeedBack = 0.5;
+                //else if (!stateChangedGem())
+                //    currentFeedBack = 0.5;
                 //bad feedback
                 else if (currentGemDistance > thelastGemDistance)
                     currentFeedBack = 0.0;
@@ -815,7 +846,7 @@ namespace ClarionDEMO
                     currentFeedBack = 0.0; //should not hapen
                 return currentFeedBack;
             }
-            currentFeedBack = 0.5;
+            currentFeedBack = 0.0;
             return currentFeedBack;
         }
 
@@ -831,9 +862,29 @@ namespace ClarionDEMO
             double xDiff = thing.comX - creature.X1;
             double yDiff = thing.comY - creature.Y1;
             double Tang = Math.Atan2(yDiff, xDiff) * 180.0 / Math.PI;
-            if (Math.Abs(Cang - Tang) <= 5 || Math.Abs(Cang - Tang) >= 355)
+            if (Math.Abs(Cang - Tang) <= 6 || Math.Abs(Cang - Tang) >= 354)
                 return true;
             return false;
+        }
+
+        /// <summary>
+        /// Return thing pitch
+        /// </summary>
+        /// <param name="creature"></param>
+        /// <param name="thing"></param>
+        /// <returns></returns>
+        private double thingPitch(Thing creature, Thing thing)
+        {
+            if (creature != null)
+            {
+                double Cang = creature.Pitch % 360;
+                double xDiff = thing.comX - creature.X1;
+                double yDiff = thing.comY - creature.Y1;
+                double Tang = Math.Atan2(yDiff, xDiff) * 180  / Math.PI;
+                if (Tang < 0) Tang += 360;
+                return Tang;
+            }
+            return 0.0;
         }
 
         /// <summary>
@@ -851,7 +902,7 @@ namespace ClarionDEMO
             double Tang = Math.Atan2(yDiff, xDiff) * 180.0 / Math.PI;
             //Console.WriteLine("CreatureXY=" + creature.X1 + "," + creature.Y1 + " ThingXY=" + thing.comX + "," + thing.comY);
             //Console.WriteLine("CreaturePitch=" + Cang + " Thingpitch(id:" + thing.CategoryId + ")=" + Tang);
-            double minang = (Cang + 5);
+            double minang = (Cang + 6);
             double maxang = (Cang + 90);
             if (minang<0) minang= 360+minang;
             if ((Tang > minang && Tang < maxang) || (Tang + 360 > minang && Tang + 360 < maxang))
@@ -874,7 +925,7 @@ namespace ClarionDEMO
             double yDiff = thing.comY - creature.Y1;
             double Tang = Math.Atan2(yDiff, xDiff) * 180.0 / Math.PI;
             double minang = (Cang - 90);
-            double maxang = (Cang - 5);
+            double maxang = (Cang - 6);
             //Console.WriteLine("CreaturePitch=" + Cang + " Thingpitch(id:" + thing.CategoryId + ")=" + Tang);
             if ((Tang > minang && Tang < maxang) || (Tang - 360 > minang && Tang - 360 < maxang))
             {
