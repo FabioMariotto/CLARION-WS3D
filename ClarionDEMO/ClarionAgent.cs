@@ -58,6 +58,7 @@ namespace ClarionDEMO
 
         #region Constants
 
+        Random rand = new Random(DateTime.Now.Millisecond);
         //Setting up visual dimension LABELS
         static private String DIMENSION_SENSOR_VISUAL = "VisualSensor";
         //Setting up Goals dimension LABELS
@@ -117,19 +118,26 @@ namespace ClarionDEMO
         private int completedLeaflets = 0;
         public int collectedJewels = 0;
         // Time between cognitive cycle in miliseconds
-        public Int32 TimeBetweenCognitiveCycles = 150;
+        public Int32 TimeBetweenCognitiveCycles = 200;
         //Fuel to start looking for food
         public int minFood = 400;
         //Distance to consider touched
         public double TouchDistance = 30;
-        public double forwardSpeed = 0.5;
-        public double backwardSpeed = 0.3;
-        public double turnSpeed = 0.1;
+        public double forwardSpeed = 1;
+        public double backwardSpeed = 0.5;
+        public double turnSpeed = 0.3;
         // A thread Class that will handle the simulation process
         private Thread runThread;
+        public double learningRate = 0.7;
+        public double param_BL_BETA = .5; //.5
+        public double param_RER_BETA = .5; //.5
+        public double param_IRL_BETA = .5; //0
+        public double param_FR_BETA = .5; //0
+        public double param_SPECIALIZATION = 0.8;//0.6
+        public double param_GENERALIZATION = 0.1;//0.1
 
         // Declaring the world
-		private WorldServer worldServer;
+        private WorldServer worldServer;
 
         #endregion
 
@@ -164,17 +172,18 @@ namespace ClarionDEMO
             net.Output.Add(eacEAT_FOOD);
 
 
-            net.Parameters.LEARNING_RATE = .5; //1
+            net.Parameters.LEARNING_RATE = learningRate; //1
             CurrentAgent.Commit(net);
 
-            CurrentAgent.ACS.Parameters.VARIABLE_BL_BETA = .5; //.5
-            CurrentAgent.ACS.Parameters.VARIABLE_RER_BETA = .5; //.5
-            CurrentAgent.ACS.Parameters.VARIABLE_IRL_BETA = .5; //0
-            CurrentAgent.ACS.Parameters.VARIABLE_FR_BETA = .5; //0
+            CurrentAgent.ACS.Parameters.VARIABLE_BL_BETA = param_BL_BETA;
+            CurrentAgent.ACS.Parameters.VARIABLE_RER_BETA = param_RER_BETA;
+            CurrentAgent.ACS.Parameters.VARIABLE_IRL_BETA = param_IRL_BETA;
+            CurrentAgent.ACS.Parameters.VARIABLE_FR_BETA = param_FR_BETA;
 
-            RefineableActionRule.GlobalParameters.SPECIALIZATION_THRESHOLD_1 = -.6; //-0.6
-            RefineableActionRule.GlobalParameters.GENERALIZATION_THRESHOLD_1 = -.2; //-0.1
-            RefineableActionRule.GlobalParameters.INFORMATION_GAIN_OPTION = RefineableActionRule.IGOptions.PERFECT; //.PERFECT
+
+            RefineableActionRule.GlobalParameters.SPECIALIZATION_THRESHOLD_1 = param_SPECIALIZATION; 
+            RefineableActionRule.GlobalParameters.GENERALIZATION_THRESHOLD_1 = param_GENERALIZATION;  
+            RefineableActionRule.GlobalParameters.INFORMATION_GAIN_OPTION = RefineableActionRule.IGOptions.MATCH_ALL; //.PERFECT
 
             //Initialising food drive
             FoodDrive foodDrive = AgentInitializer.InitializeDrive(CurrentAgent, FoodDrive.Factory, 1.0, (DeficitChangeProcessor)FoodDrive_DeficitChange);
@@ -223,7 +232,7 @@ namespace ClarionDEMO
         /// <param name="nws"></param>
         /// <param name="creature_ID"></param>
         /// <param name="creature_Name"></param>
-        public ClarionAgent(WorldServer nws, String creature_ID, String creature_Name)
+        public ClarionAgent(WorldServer nws)//, String creature_ID, String creature_Name)
         {
             //Resetting leaflet
             leaflet1 = new int[6]{ 0, 0, 0, 0, 0, 0};
@@ -237,8 +246,9 @@ namespace ClarionDEMO
             //recording world and creature references
             worldServer = nws;
             CurrentAgent = World.NewAgent("CurrentAgent");
-			creatureId = creature_ID;
-			creatureName = creature_Name;
+            resetWorld();
+            //creatureId = creature_ID;
+			//creatureName = creature_Name;
 
             // Initialize Input Information
             //inputObjAhead   = World.NewDimensionValuePair(DIMENSION_SENSOR_VISUAL, VALUE_Obj_Ahead    );
@@ -266,7 +276,7 @@ namespace ClarionDEMO
             startTime = DateTime.Now;
             //Create thread to run simulation
             runThread = new Thread(CognitiveCycle);
-			Console.WriteLine("Agent started");
+			//Console.WriteLine("Agent started");
         }
 
         /// <summary>
@@ -274,7 +284,19 @@ namespace ClarionDEMO
         /// </summary>
         public void Run()
         {                
-			Console.WriteLine ("Running ...");
+			Console.WriteLine ("Starting Simulation");
+            Console.WriteLine("Would you like to set the parameters manualy? (y=yes)(other=no)");
+            if (Console.ReadLine().ToLower() == "y")
+            {
+                Console.WriteLine("Would you like to update the console during simulation? (y=yes)(other=no)");
+                if (Console.ReadLine().ToLower() == "y") displayConsole = true;
+                else displayConsole = false;
+
+                Console.WriteLine("What your desired learning rate? (double[0.0;1.0])");
+                double.TryParse(Console.ReadLine(), out learningRate);
+
+
+            } 
             // Setup Agent to run
             if (runThread != null && !runThread.IsAlive)
             {
@@ -299,6 +321,42 @@ namespace ClarionDEMO
             if (CurrentAgent != null && deleteAgent)
             {
                 CurrentAgent.Die();
+            }
+        }
+
+
+        /// <summary>
+        /// Reset the WS3D and create the starting creature and objects
+        /// </summary>
+        public void resetWorld()
+        {
+            worldServer.SendWorldReset();
+            worldServer.NewCreature(400, 300, 0, out creatureId, out creatureName);
+            worldServer.SendCreateLeaflet();
+            Random rand = new Random(1);
+            int j = 0;
+            int f = 1;
+            double ang = 0;
+            for (int i = 1; i < 25; i++)
+            {
+                ang = (i - 1) * 0.261;
+                if (f % 4 == 0)
+                {
+                    worldServer.NewFood(0, (int)(Math.Cos(ang) * 250) + 400, (int)(Math.Sin(ang) * 250) + 300);
+                }
+                else
+                {
+                    worldServer.NewJewel(j, (int)(Math.Cos(ang) * 250) + 400, (int)(Math.Sin(ang) * 250) + 300);
+                    if (j > 4) j = 0;
+                    else j++;
+                }
+                f++;
+            }
+
+            if (!String.IsNullOrWhiteSpace(creatureId))
+            {
+                worldServer.SendStartCamera(creatureId);
+                worldServer.SendStartCreature(creatureId);
             }
         }
 
@@ -604,6 +662,7 @@ namespace ClarionDEMO
             Creature c = (Creature)mycreature;
            
             currentFUEL = c.Fuel;
+
        
             currentLeaf = updateLeaflet(c);
            
@@ -718,30 +777,9 @@ namespace ClarionDEMO
 
                     recordCreatureLife();
 
-                    worldServer.SendWorldReset();
-                    worldServer.NewCreature(400, 300, 0, out creatureId, out creatureName);
-                    worldServer.SendCreateLeaflet();
-                    Random rand = new Random(DateTime.Now.Millisecond);
-                    int j = 0;
-                    int f = 1;
-                    double ang = 0;
-                    for (int i = 1; i < 25; i++)
-                    {
-                        ang = (i - 1) * 0.261;
-                        if (f % 4 == 0)
-                        {
-                            worldServer.NewFood(0, (int)(Math.Cos(ang) * 250) + 400, (int)(Math.Sin(ang) * 250) + 300);
-                        }
-                        else
-                        {
-                            worldServer.NewJewel(j, (int)(Math.Cos(ang) * 250) + 400, (int)(Math.Sin(ang) * 250) + 300);
-                            if (j > 4) j = 0;
-                            else j++;
-                        }
-                        f++;
-                    }
-                    worldServer.SendStartCamera(creatureId);
-                    worldServer.SendStartCreature(creatureId);
+                    //restarts the world and creature
+                    resetWorld();
+
                     leaflet1 = new int[6] { 0, 0, 0, 0, 0, 0 };
                     leaflet1[rand.Next(0, 5)]=3;
                     //leaflet1[rand.Next(0, 5)]++;
@@ -764,18 +802,22 @@ namespace ClarionDEMO
         /// </summary>
         public void recordCreatureLife()
         {
-            if(creatureLife==1)
-                    File.WriteAllText("SuccessRecord.txt", "Creature Life;Creature Status;Collected Jewels;Completed Leaflets;Amount Learned Rules;Success Rate;Time[s]\r\n");
-            string Rules = "";
-                foreach (var i in CurrentAgent.GetInternals(Agent.InternalContainers.ACTION_RULES))
+            try
             {
-                Rules+=("<" + i+">");
+                if (creatureLife == 1)
+                    File.WriteAllText("SuccessRecord.csv", "Creature Life;Creature Status;Collected Jewels;Completed Leaflets;Amount Learned Rules;Success Rate;Time[s]\r\n");
+                string Rules = "";
+                foreach (var i in CurrentAgent.GetInternals(Agent.InternalContainers.ACTION_RULES))
+                {
+                    Rules += ("<" + i + ">");
+                }
+                string text = creatureLife + ";" + ((updateLeaflet(mycreature) > 0) ? "LOOSER" : "WINNER") + ";" + collectedJewels + ";" + completedLeaflets + ";" + CurrentAgent.GetInternals(Agent.InternalContainers.ACTION_RULES).Count() + ";" + (((double)completedLeaflets) / creatureLife) + ";" + (DateTime.Now - startTime).Seconds;
+                StreamWriter Writer = new StreamWriter("SuccessRecord.csv", true);
+                Writer.WriteLine(text);
+                Writer.Flush();
+                Writer.Close();
             }
-            string text = creatureLife + ";" + ((currentFUEL <= 0) ? "LOOSER" : "WINNER") + ";" + collectedJewels + ";" + completedLeaflets + ";" + CurrentAgent.GetInternals(Agent.InternalContainers.ACTION_RULES).Count() + ";" + (((double)completedLeaflets) / creatureLife) + ";" + (DateTime.Now-startTime).Seconds;
-            StreamWriter Writer = new StreamWriter("SuccessRecord.txt", true);
-            Writer.WriteLine(text);
-            Writer.Flush();
-            Writer.Close();
+            catch { }
         }
 
         /// <summary>
@@ -783,23 +825,30 @@ namespace ClarionDEMO
         /// </summary>
         private void recordLearnedRules()
         {
-            if (!File.Exists("LearnedRules.txt") == true)
-                File.WriteAllText("LearnedRules.txt", "");
-
-            StreamWriter configWriter;
-            configWriter = new StreamWriter("LearnedRules.txt", false);
-            configWriter.Write("Forward Speed: " + forwardSpeed + "   Backward Speed: " + backwardSpeed+"  Turn Speed:"+turnSpeed);
-            configWriter.Write("\r\nTimeBetween Cognitive Cycles: " + TimeBetweenCognitiveCycles);
-            configWriter.Write("\r\nIntouch Distance: " + TouchDistance + "  Fuel low level: " + minFood);
-            configWriter.Write("\r\nAfter " + TotalCognitiveCycle + " cogcycles within " + creatureLife + " creature lifes, the creature completed " + completedLeaflets + " leaflets (Jewels = " + collectedJewels + ")");
-            configWriter.Write("\r\nIt has also learned the following rules:\r\n");
-            foreach (var i in CurrentAgent.GetInternals(Agent.InternalContainers.ACTION_RULES))
+            try
             {
-                configWriter.Write("\r\n" + i);
-                //Console.WriteLine("\r\n" + i.ToString());
+                if (!File.Exists("LearnedRules.txt") == true)
+                    File.WriteAllText("LearnedRules.txt", "");
+
+                StreamWriter configWriter;
+                configWriter = new StreamWriter("LearnedRules.txt", false);
+                configWriter.Write("Forward Speed: " + forwardSpeed + "   Backward Speed: " + backwardSpeed + "  Turn Speed:" + turnSpeed);
+                configWriter.Write("\r\nBETAS>   BL: " + param_BL_BETA + "  FR: " + param_FR_BETA + "  IRL: " + param_IRL_BETA + "  RER: " + param_RER_BETA);
+                configWriter.Write("\r\nGeneralization: " + param_GENERALIZATION + "   Specialization: " + param_SPECIALIZATION);
+                configWriter.Write("\r\nLearning Rate: " + learningRate);
+                configWriter.Write("\r\nTimeBetween Cognitive Cycles: " + TimeBetweenCognitiveCycles);
+                configWriter.Write("\r\nIntouch Distance: " + TouchDistance + "  Fuel low level: " + minFood);
+                configWriter.Write("\r\nAfter " + TotalCognitiveCycle + " cogcycles within " + creatureLife + " creature lifes, the creature completed " + completedLeaflets + " leaflets (Jewels = " + collectedJewels + ")");
+                configWriter.Write("\r\nIt has also learned the following rules:\r\n");
+                foreach (var i in CurrentAgent.GetInternals(Agent.InternalContainers.ACTION_RULES))
+                {
+                    configWriter.Write("\r\n" + i);
+                    //Console.WriteLine("\r\n" + i.ToString());
+                }
+                configWriter.Flush();
+                configWriter.Close();
             }
-            configWriter.Flush();
-            configWriter.Close();
+            catch { }
         }
 
 

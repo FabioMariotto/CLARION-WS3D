@@ -8,7 +8,7 @@ using System.Threading;
 using WorldServerLibrary;
 using WorldServerLibrary.Model;
 using WorldServerLibrary.Exceptions;
-using Gtk;
+//using Gtk;
 
 namespace ClarionDEMO
 {
@@ -23,7 +23,7 @@ namespace ClarionDEMO
 
 		#region constructor
 		public MainClass() {
-			Application.Init();
+			//Application.Init();
 			Console.WriteLine ("Clarion Demo V0.7");
 			try
             {
@@ -37,10 +37,6 @@ namespace ClarionDEMO
 					worldServer.SendWorldReset();
                     worldServer.NewCreature(400, 300, 0, out creatureId, out creatureName);
                     worldServer.SendCreateLeaflet();
-                    //worldServer.NewBrick(4, 790, 0, 800, 590);
-                    //worldServer.NewBrick(4, 0, 0, 790, 10);
-                    //worldServer.NewBrick(4, 10, 590, 800, 600);
-                    //worldServer.NewBrick(4, 0, 0, 10, 600);
                     Random rand = new Random(1);
                     int j = 0;
                     int f = 1;
@@ -61,29 +57,16 @@ namespace ClarionDEMO
                         f++;
                     }
                     
-                    //for (int i = 0; i < 10; i++)
-                    //{
-                    //    worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
-                    //    worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
-                    //    worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
-                    //    worldServer.NewJewel(i, rand.Next(20, 790), rand.Next(20, 580));
-                    //}
-                    //worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
-                    //worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
-                    //worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
-                    //worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
-                    //worldServer.NewFood(1, rand.Next(20, 790), rand.Next(20, 580));
-
                     if (!String.IsNullOrWhiteSpace(creatureId))
                     {
                         worldServer.SendStartCamera(creatureId);
                         worldServer.SendStartCreature(creatureId);
                     }
 
-                    Console.Out.WriteLine("Creature created with name: " + creatureId + "\n");
-					agent = new ClarionAgent(worldServer,creatureId,creatureName);
+                    //Console.Out.WriteLine("Creature created with name: " + creatureId + "\n");
+                    agent = new ClarionAgent(worldServer);//,creatureId,creatureName);
                     agent.Run();
-					Console.Out.WriteLine("Running Simulation ...\n");
+					//Console.Out.WriteLine("Running Simulation ...\n");
                 }
             }
             catch (WorldServerInvalidArgument invalidArtgument)
@@ -98,7 +81,7 @@ namespace ClarionDEMO
             {
                 Console.Out.WriteLine(String.Format("[ERROR] Unknown Error: {0}\n", ex.Message));
             }
-			Application.Run();
+			//Application.Run();
 		}
 		#endregion
 
