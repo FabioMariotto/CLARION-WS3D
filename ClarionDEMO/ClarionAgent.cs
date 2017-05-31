@@ -175,10 +175,10 @@ namespace ClarionDEMO
             net.Parameters.LEARNING_RATE = learningRate; //1
             CurrentAgent.Commit(net);
 
-            CurrentAgent.ACS.Parameters.VARIABLE_BL_BETA = param_BL_BETA;
-            CurrentAgent.ACS.Parameters.VARIABLE_RER_BETA = param_RER_BETA;
-            CurrentAgent.ACS.Parameters.VARIABLE_IRL_BETA = param_IRL_BETA;
-            CurrentAgent.ACS.Parameters.VARIABLE_FR_BETA = param_FR_BETA;
+           // CurrentAgent.ACS.Parameters.VARIABLE_BL_BETA = param_BL_BETA;
+            //CurrentAgent.ACS.Parameters.VARIABLE_RER_BETA = param_RER_BETA;
+           // CurrentAgent.ACS.Parameters.VARIABLE_IRL_BETA = param_IRL_BETA;
+           // CurrentAgent.ACS.Parameters.VARIABLE_FR_BETA = param_FR_BETA;
 
 
             RefineableActionRule.GlobalParameters.SPECIALIZATION_THRESHOLD_1 = param_SPECIALIZATION; 

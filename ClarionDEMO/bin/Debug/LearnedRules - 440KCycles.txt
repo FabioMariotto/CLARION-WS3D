@@ -1,0 +1,502 @@
+Forward Speed: 1   Backward Speed: 0.5  Turn Speed:0.3
+BETAS>   BL: 0.5  FR: 0.5  IRL: 0.5  RER: 0.5
+Generalization: 0.1   Specialization: 0.8
+Learning Rate: 0.7
+TimeBetween Cognitive Cycles: 200
+Intouch Distance: 30  Fuel low level: 400
+After 439579 cogcycles within 664 creature lifes, the creature completed 539 leaflets (Jewels = 1826)
+It has also learned the following rules:
+
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = True,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk ROTATE_RIGHT:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = ROTATE_RIGHT)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk ROTATE_RIGHT:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = ROTATE_RIGHT)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk ROTATE_RIGHT:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = ROTATE_RIGHT)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk ROTATE_RIGHT:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = ROTATE_RIGHT)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk ROTATE_RIGHT:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = ROTATE_RIGHT)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk GO_AHEAD:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GO_AHEAD)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = True
+Action:
+	ExternalActionChunk GO_AHEAD:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GO_AHEAD)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk GO_AHEAD:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GO_AHEAD)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = True
+Action:
+	ExternalActionChunk GO_AHEAD:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GO_AHEAD)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk GO_AHEAD:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GO_AHEAD)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = True
+Action:
+	ExternalActionChunk GO_BACK:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GO_BACK)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = True,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk GO_BACK:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GO_BACK)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = True,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk GO_BACK:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GO_BACK)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk GO_BACK:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GO_BACK)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk GO_BACK:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GO_BACK)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk GO_BACK:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GO_BACK)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk GO_BACK:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GO_BACK)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = True
+Action:
+	ExternalActionChunk ROTATE_LEFT:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = ROTATE_LEFT)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk ROTATE_LEFT:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = ROTATE_LEFT)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk ROTATE_LEFT:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = ROTATE_LEFT)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk ROTATE_LEFT:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = ROTATE_LEFT)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk EAT_FOOD:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = EAT_FOOD)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk EAT_FOOD:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = EAT_FOOD)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk EAT_FOOD:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = EAT_FOOD)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = True
+Action:
+	ExternalActionChunk EAT_FOOD:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = EAT_FOOD)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk GET_ITEM:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GET_ITEM)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk GET_ITEM:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GET_ITEM)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = True,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = False
+Action:
+	ExternalActionChunk GET_ITEM:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GET_ITEM)
+Condition:
+	Dimension Goals, Weight = 1
+		(Dimension = Goals, Value = Search Food) Setting = False,
+		(Dimension = Goals, Value = Search Gem) Setting = True
+	Dimension VisualSensor, Weight = 1
+		(Dimension = VisualSensor, Value = Gem Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Food Ahead) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Right) Setting = True,
+		(Dimension = VisualSensor, Value = Gem Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Gem Up Front) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Right) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Left) Setting = False,
+		(Dimension = VisualSensor, Value = Food Up Front) Setting = True
+Action:
+	ExternalActionChunk GET_ITEM:
+		 Dimension SemanticLabel, Weight = 1
+			(Dimension = SemanticLabel, Value = GET_ITEM)
